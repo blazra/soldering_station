@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive BOM for KiCAD</title>
+  <style type="text/css">
+:root {
+  --pcb-edge-color: black;
+  --pad-color: #878787;
+  --pad-color-highlight: #D04040;
+  --pin1-outline-color: #ffb629;
+  --pin1-outline-color-highlight: #b4ff03;
+}
+
+html, body {
+  margin: 0px;
+  height: 100%;
+  font-family: Verdana, sans-serif;
+}
+
+.dark {
+  --pcb-edge-color: #eee;
+  --pad-color: #808080;
+  --pin1-outline-color: #ffa800;
+  --pin1-outline-color-highlight: #ccff00;
+  background-color: #252c30;
+  color: #eee;
+}
+
+button {
+  background-color: #eee;
+  border: 1px solid #888;
+  color: black;
+  height: 44px;
+  width: 44px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: bolder;
+}
+
+.dark button {
+  /* This will be inverted */
+  background-color: #c3b7b5;
+}
+
+button.depressed {
+  background-color: #0a0;
+  color: white;
+}
+
+.dark button.depressed {
+  /* This will be inverted */
+  background-color: #b3b;
+}
+
+button:focus {
+  outline: 0;
+}
+
+button#tb-btn {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8.47 8.47'%3E%3Crect transform='translate(0 -288.53)' ry='1.17' y='288.8' x='.27' height='7.94' width='7.94' fill='%23f9f9f9'/%3E%3Cg transform='translate(0 -288.53)'%3E%3Crect width='7.94' height='7.94' x='.27' y='288.8' ry='1.17' fill='none' stroke='%23000' stroke-width='.4' stroke-linejoin='round'/%3E%3Cpath d='M1.32 290.12h5.82M1.32 291.45h5.82' fill='none' stroke='%23000' stroke-width='.4'/%3E%3Cpath d='M4.37 292.5v4.23M.26 292.63H8.2' fill='none' stroke='%23000' stroke-width='.3'/%3E%3Ctext font-weight='700' font-size='3.17' font-family='sans-serif'%3E%3Ctspan x='1.35' y='295.73'%3EF%3C/tspan%3E%3Ctspan x='5.03' y='295.68'%3EB%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E%0A");
+  background-size: 32px 32px;
+  background-position: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+button#lr-btn {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8.47 8.47'%3E%3Crect transform='translate(0 -288.53)' ry='1.17' y='288.8' x='.27' height='7.94' width='7.94' fill='%23f9f9f9'/%3E%3Cg transform='translate(0 -288.53)'%3E%3Crect width='7.94' height='7.94' x='.27' y='288.8' ry='1.17' fill='none' stroke='%23000' stroke-width='.4' stroke-linejoin='round'/%3E%3Cpath d='M1.06 290.12H3.7m-2.64 1.33H3.7m-2.64 1.32H3.7m-2.64 1.3H3.7m-2.64 1.33H3.7' fill='none' stroke='%23000' stroke-width='.4'/%3E%3Cpath d='M4.37 288.8v7.94m0-4.11h3.96' fill='none' stroke='%23000' stroke-width='.3'/%3E%3Ctext font-weight='700' font-size='3.17' font-family='sans-serif'%3E%3Ctspan x='5.11' y='291.96'%3EF%3C/tspan%3E%3Ctspan x='5.03' y='295.68'%3EB%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E%0A");
+  background-size: 32px 32px;
+  background-position: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+button#bom-btn {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8.47 8.47'%3E%3Crect transform='translate(0 -288.53)' ry='1.17' y='288.8' x='.27' height='7.94' width='7.94' fill='%23f9f9f9'/%3E%3Cg transform='translate(0 -288.53)' fill='none' stroke='%23000' stroke-width='.4'%3E%3Crect width='7.94' height='7.94' x='.27' y='288.8' ry='1.17' stroke-linejoin='round'/%3E%3Cpath d='M1.59 290.12h5.29M1.59 291.45h5.33M1.59 292.75h5.33M1.59 294.09h5.33M1.59 295.41h5.33'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 32px 32px;
+  background-position: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+button#copy {
+  background-image: url("data:image/svg+xml,%3Csvg height='48' viewBox='0 0 48 48' width='48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h48v48h-48z' fill='none'/%3E%3Cpath d='M32 2h-24c-2.21 0-4 1.79-4 4v28h4v-28h24v-4zm6 8h-22c-2.21 0-4 1.79-4 4v28c0 2.21 1.79 4 4 4h22c2.21 0 4-1.79 4-4v-28c0-2.21-1.79-4-4-4zm0 32h-22v-28h22v28z'/%3E%3C/svg%3E");
+  background-position: 6px 6px;
+  background-repeat: no-repeat;
+  background-size: 26px 26px;
+  border-radius: 6px;
+  height: 40px;
+  width: 40px;
+  margin: 10px 5px;
+}
+
+button#copy:active {
+    box-shadow: inset 0px 0px 5px #6c6c6c;
+}
+
+textarea.clipboard-temp {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 2em;
+  height: 2em;
+  padding: 0;
+  border: None;
+  outline: None;
+  box-shadow: None;
+  background: transparent;
+}
+
+.left-most-button {
+  border-right: 0;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.middle-button {
+  border-right: 0;
+}
+
+.right-most-button {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.button-container {
+  font-size: 0;
+}
+
+.dark .button-container {
+  filter: invert(1);
+}
+
+@media print {
+  .hideonprint {
+    display: none;
+  }
+}
+
+canvas {
+  cursor: crosshair;
+}
+
+canvas:active {
+  cursor: grabbing;
+}
+
+.fileinfo {
+  width: 100%;
+  max-width: 1000px;
+  border: none;
+  padding: 5px;
+}
+
+.fileinfo .title {
+  font-size: 20pt;
+  font-weight: bold;
+}
+
+.fileinfo td {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 1px;
+  width: 50%;
+  text-overflow: ellipsis;
+}
+
+.bom {
+  border-collapse: collapse;
+  font-family: Consolas, "DejaVu Sans Mono", Monaco, monospace;
+  font-size: 10pt;
+  table-layout: fixed;
+  width: 100%;
+  margin-top: 1px;
+}
+
+.bom th, .bom td {
+  border: 1px solid black;
+  padding: 5px;
+  word-wrap: break-word;
+  text-align: center;
+  position: relative;
+}
+
+.dark .bom th, .dark .bom td {
+  border: 1px solid #777;
+}
+
+.bom th {
+  background-color: #CCCCCC;
+  background-clip: padding-box;
+}
+
+.dark .bom th {
+  background-color: #3b4749;
+}
+
+.bom tr.highlighted:nth-child(n) {
+  background-color: #cfc;
+}
+
+.dark .bom tr.highlighted:nth-child(n) {
+  background-color: #226022;
+}
+
+.bom tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.dark .bom tr:nth-child(even) {
+  background-color: #313b40;
+}
+
+.bom tr {
+  transition: background-color 0.2s;
+}
+
+.bom .numCol {
+  width: 25px;
+}
+
+.bom .Description {
+  width: 10%;
+}
+
+.bom .Part {
+  width: 10%;
+}
+
+.bom .Value {
+  width: 15%;
+}
+
+.bom .Quantity {
+  width: 65px;
+}
+
+.bom th .sortmark {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #221 transparent;
+  transform-origin: 50% 85%;
+  transition: opacity 0.2s, transform 0.4s;
+}
+
+.dark .bom th .sortmark {
+  filter: invert(1);
+}
+
+.bom th .sortmark.none {
+  opacity: 0;
+}
+
+.bom th .sortmark.desc {
+  transform: rotate(180deg);
+}
+
+.bom th:hover .sortmark.none {
+  opacity: 0.5;
+}
+
+.bom .bom-checkbox {
+  width: 30px;
+  position: relative;
+  user-select: none;
+  -moz-user-select: none;
+}
+
+.bom .bom-checkbox:before {
+  content: "";
+  position: absolute;
+  border-width: 15px;
+  border-style: solid;
+  border-color: #51829f transparent transparent transparent;
+  visibility: hidden;
+  top: -15px;
+}
+
+.bom .bom-checkbox:after {
+  content: "Double click to set/unset all";
+  position: absolute;
+  color: white;
+  top: -35px;
+  left: -26px;
+  background: #51829f;
+  padding: 5px 15px;
+  border-radius: 8px;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
+.bom .bom-checkbox:hover:before, .bom .bom-checkbox:hover:after {
+  visibility: visible;
+  transition: visibility 0.2s linear 1s;
+}
+
+.split {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: inherit;
+}
+
+.split.split-horizontal, .gutter.gutter-horizontal {
+  height: 100%;
+  float: left;
+}
+
+.gutter {
+  background-color: #ddd;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transition: background-color 0.3s;
+}
+
+.dark .gutter {
+  background-color: #777;
+}
+
+.gutter.gutter-horizontal {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+  cursor: ew-resize;
+  width: 5px;
+}
+
+.gutter.gutter-vertical {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+  cursor: ns-resize;
+  height: 5px;
+}
+
+.searchbox {
+  float: left;
+  height: 40px;
+  margin: 10px 5px;
+  padding: 12px 32px;
+  font-family: Consolas, "DejaVu Sans Mono", Monaco, monospace;
+  font-size: 18px;
+  box-sizing: border-box;
+  border: 1px solid #888;
+  border-radius: 6px;
+  outline: none;
+  background-color: #eee;
+  transition: background-color 0.2s, border 0.2s;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABNklEQVQ4T8XSMUvDQBQH8P/LElFa/AIZHcTBQSz0I/gFstTBRR2KUC4ldDxw7h0Bl3RRUATxi4iiODgoiLNrbQYp5J6cpJJqomkX33Z37/14d/dIa33MzDuYI4johOI4XhyNRteO46zNYjDzAxE1yBZprVeZ+QbAUhXEGJMA2Ox2u4+fQIa0mPmsCgCgJYQ4t7lfgF0opQYAdv9ABkKI/UnOFCClXKjX61cA1osQY8x9kiRNKeV7IWA3oyhaSdP0FkAtjxhj3hzH2RBCPOf3pzqYHCilfAAX+URm9oMguPzeWSGQvUcMYC8rOBJCHBRdqxTo9/vbRHRqi8bj8XKv1xvODbiuW2u32/bvf0SlDv4XYOY7z/Mavu+nM1+BmQ+NMc0wDF/LprP0DbTWW0T00ul0nn4b7Q87+X4Qmfiq2wAAAABJRU5ErkJggg==');
+  background-position: 10px 10px;
+  background-repeat: no-repeat;
+}
+
+.dark .searchbox {
+  background-color: #111;
+  color: #eee;
+}
+
+.searchbox::placeholder {
+  color: #ccc;
+}
+
+.dark .searchbox::placeholder {
+  color: #666;
+}
+
+.filter {
+  width: calc(60% - 64px);
+}
+
+.reflookup {
+  width: calc(40% - 10px);
+}
+
+input[type=text]:focus {
+  background-color: white;
+  border: 1px solid #333;
+}
+
+.dark input[type=text]:focus {
+  background-color: #333;
+  border: 1px solid #ccc;
+}
+
+mark.highlight {
+  background-color: #5050ff;
+  color: #fff;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.dark mark.highlight {
+  background-color: #76a6da;
+  color: #111;
+}
+
+.menubtn {
+  background-color: white;
+  font-size: 16px;
+  border: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 20 20'%3E%3Cpath fill='none' d='M0 0h20v20H0V0z'/%3E%3Cpath d='M15.95 10.78c.03-.25.05-.51.05-.78s-.02-.53-.06-.78l1.69-1.32c.15-.12.19-.34.1-.51l-1.6-2.77c-.1-.18-.31-.24-.49-.18l-1.99.8c-.42-.32-.86-.58-1.35-.78L12 2.34c-.03-.2-.2-.34-.4-.34H8.4c-.2 0-.36.14-.39.34l-.3 2.12c-.49.2-.94.47-1.35.78l-1.99-.8c-.18-.07-.39 0-.49.18l-1.6 2.77c-.1.18-.06.39.1.51l1.69 1.32c-.04.25-.07.52-.07.78s.02.53.06.78L2.37 12.1c-.15.12-.19.34-.1.51l1.6 2.77c.1.18.31.24.49.18l1.99-.8c.42.32.86.58 1.35.78l.3 2.12c.04.2.2.34.4.34h3.2c.2 0 .37-.14.39-.34l.3-2.12c.49-.2.94-.47 1.35-.78l1.99.8c.18.07.39 0 .49-.18l1.6-2.77c.1-.18.06-.39-.1-.51l-1.67-1.32zM10 13c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z'/%3E%3C/svg%3E%0A");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.dark .menubtn {
+  filter: invert(1);
+}
+
+.menu {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  right: 0;
+  min-width: 300px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  padding: 8px;
+}
+
+.dark .menu-content {
+  background-color: #111;
+}
+
+.menu:hover .menu-content {
+  display: block;
+}
+
+.menu:hover .menubtn {
+  background-color: #eee;
+}
+
+.dark .menu:hover .menubtn {}
+
+.menu-label {
+  display: inline-block;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-top: 0;
+  width: calc(100% - 18px);
+}
+
+.menu-label-top {
+  border-top: 1px solid #ccc;
+}
+
+.menu-textbox {
+  float: left;
+  height: 24px;
+  margin: 10px 5px;
+  padding: 5px 5px;
+  font-family: Consolas, "DejaVu Sans Mono", Monaco, monospace;
+  font-size: 14px;
+  box-sizing: border-box;
+  border: 1px solid #888;
+  border-radius: 4px;
+  outline: none;
+  background-color: #eee;
+  transition: background-color 0.2s, border 0.2s;
+  width: calc(100% - 10px);
+}
+
+.dark .menu-textbox {
+  background-color: #222;
+  color: #eee;
+}
+
+#topmostdiv {
+  transition: background-color 0.3s;
+}
+
+#top {
+  height: 78px;
+  border-bottom: 2px solid black;
+}
+
+.dark #top {
+  border-bottom: 2px solid #ccc;
+}
+
+#dbg {
+  display: block;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #aaa;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  margin: 3px 0;
+  padding: 0;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+  border-radius: 3px;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider:focus {
+  outline: none;
+}
+
+.slider::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #d3d3d3;
+  border-radius: 3px;
+  border: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #0a0;
+  cursor: pointer;
+  margin-top: -4px;
+}
+
+.dark .slider::-webkit-slider-thumb {
+  background: #3d3;
+}
+
+.slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #0a0;
+  cursor: pointer;
+}
+
+.slider::-moz-range-track {
+  height: 8px;
+  background: #d3d3d3;
+  border-radius: 3px;
+}
+
+.dark .slider::-moz-range-thumb {
+  background: #3d3;
+}
+
+.slider::-ms-track {
+  width: 100%;
+  height: 8px;
+  border-width: 3px 0;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+  transition: opacity .2s;
+}
+
+.slider::-ms-fill-lower {
+  background: #d3d3d3;
+  border: none;
+  border-radius: 3px;
+}
+
+.slider::-ms-fill-upper {
+  background: #d3d3d3;
+  border: none;
+  border-radius: 3px;
+}
+
+.slider::-ms-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #0a0;
+  cursor: pointer;
+  margin: 0;
+}
+
+.shameless-plug {
+  font-size: 0.8em;
+  text-align: center;
+  display: block;
+}
+
+a {
+  color: #0278a4;
+}
+
+.dark a {
+  color: #00b9fd;
+}
+
+  </style>
+  <script type="text/javascript" >
+///////////////////////////////////////////////
+/*
+  Split.js - v1.3.5
+  MIT License
+  https://github.com/nathancahill/Split.js
+*/
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):e.Split=t()}(this,function(){"use strict";var e=window,t=e.document,n="addEventListener",i="removeEventListener",r="getBoundingClientRect",s=function(){return!1},o=e.attachEvent&&!e[n],a=["","-webkit-","-moz-","-o-"].filter(function(e){var n=t.createElement("div");return n.style.cssText="width:"+e+"calc(9px)",!!n.style.length}).shift()+"calc",l=function(e){return"string"==typeof e||e instanceof String?t.querySelector(e):e};return function(u,c){function z(e,t,n){var i=A(y,t,n);Object.keys(i).forEach(function(t){return e.style[t]=i[t]})}function h(e,t){var n=B(y,t);Object.keys(n).forEach(function(t){return e.style[t]=n[t]})}function f(e){var t=E[this.a],n=E[this.b],i=t.size+n.size;t.size=e/this.size*i,n.size=i-e/this.size*i,z(t.element,t.size,this.aGutterSize),z(n.element,n.size,this.bGutterSize)}function m(e){var t;this.dragging&&((t="touches"in e?e.touches[0][b]-this.start:e[b]-this.start)<=E[this.a].minSize+M+this.aGutterSize?t=E[this.a].minSize+this.aGutterSize:t>=this.size-(E[this.b].minSize+M+this.bGutterSize)&&(t=this.size-(E[this.b].minSize+this.bGutterSize)),f.call(this,t),c.onDrag&&c.onDrag())}function g(){var e=E[this.a].element,t=E[this.b].element;this.size=e[r]()[y]+t[r]()[y]+this.aGutterSize+this.bGutterSize,this.start=e[r]()[G]}function d(){var t=this,n=E[t.a].element,r=E[t.b].element;t.dragging&&c.onDragEnd&&c.onDragEnd(),t.dragging=!1,e[i]("mouseup",t.stop),e[i]("touchend",t.stop),e[i]("touchcancel",t.stop),t.parent[i]("mousemove",t.move),t.parent[i]("touchmove",t.move),delete t.stop,delete t.move,n[i]("selectstart",s),n[i]("dragstart",s),r[i]("selectstart",s),r[i]("dragstart",s),n.style.userSelect="",n.style.webkitUserSelect="",n.style.MozUserSelect="",n.style.pointerEvents="",r.style.userSelect="",r.style.webkitUserSelect="",r.style.MozUserSelect="",r.style.pointerEvents="",t.gutter.style.cursor="",t.parent.style.cursor=""}function S(t){var i=this,r=E[i.a].element,o=E[i.b].element;!i.dragging&&c.onDragStart&&c.onDragStart(),t.preventDefault(),i.dragging=!0,i.move=m.bind(i),i.stop=d.bind(i),e[n]("mouseup",i.stop),e[n]("touchend",i.stop),e[n]("touchcancel",i.stop),i.parent[n]("mousemove",i.move),i.parent[n]("touchmove",i.move),r[n]("selectstart",s),r[n]("dragstart",s),o[n]("selectstart",s),o[n]("dragstart",s),r.style.userSelect="none",r.style.webkitUserSelect="none",r.style.MozUserSelect="none",r.style.pointerEvents="none",o.style.userSelect="none",o.style.webkitUserSelect="none",o.style.MozUserSelect="none",o.style.pointerEvents="none",i.gutter.style.cursor=j,i.parent.style.cursor=j,g.call(i)}function v(e){e.forEach(function(t,n){if(n>0){var i=F[n-1],r=E[i.a],s=E[i.b];r.size=e[n-1],s.size=t,z(r.element,r.size,i.aGutterSize),z(s.element,s.size,i.bGutterSize)}})}function p(){F.forEach(function(e){e.parent.removeChild(e.gutter),E[e.a].element.style[y]="",E[e.b].element.style[y]=""})}void 0===c&&(c={});var y,b,G,E,w=l(u[0]).parentNode,D=e.getComputedStyle(w).flexDirection,U=c.sizes||u.map(function(){return 100/u.length}),k=void 0!==c.minSize?c.minSize:100,x=Array.isArray(k)?k:u.map(function(){return k}),L=void 0!==c.gutterSize?c.gutterSize:10,M=void 0!==c.snapOffset?c.snapOffset:30,O=c.direction||"horizontal",j=c.cursor||("horizontal"===O?"ew-resize":"ns-resize"),C=c.gutter||function(e,n){var i=t.createElement("div");return i.className="gutter gutter-"+n,i},A=c.elementStyle||function(e,t,n){var i={};return"string"==typeof t||t instanceof String?i[e]=t:i[e]=o?t+"%":a+"("+t+"% - "+n+"px)",i},B=c.gutterStyle||function(e,t){return n={},n[e]=t+"px",n;var n};"horizontal"===O?(y="width","clientWidth",b="clientX",G="left","paddingLeft"):"vertical"===O&&(y="height","clientHeight",b="clientY",G="top","paddingTop");var F=[];return E=u.map(function(e,t){var i,s={element:l(e),size:U[t],minSize:x[t]};if(t>0&&(i={a:t-1,b:t,dragging:!1,isFirst:1===t,isLast:t===u.length-1,direction:O,parent:w},i.aGutterSize=L,i.bGutterSize=L,i.isFirst&&(i.aGutterSize=L/2),i.isLast&&(i.bGutterSize=L/2),"row-reverse"===D||"column-reverse"===D)){var a=i.a;i.a=i.b,i.b=a}if(!o&&t>0){var c=C(t,O);h(c,L),c[n]("mousedown",S.bind(i)),c[n]("touchstart",S.bind(i)),w.insertBefore(c,s.element),i.gutter=c}0===t||t===u.length-1?z(s.element,s.size,L/2):z(s.element,s.size,L);var f=s.element[r]()[y];return f<s.minSize&&(s.minSize=f),t>0&&F.push(i),s}),o?{setSizes:v,destroy:p}:{setSizes:v,getSizes:function(){return E.map(function(e){return e.size})},collapse:function(e){if(e===F.length){var t=F[e-1];g.call(t),o||f.call(t,t.size-t.bGutterSize)}else{var n=F[e];g.call(n),o||f.call(n,n.aGutterSize)}},destroy:p}}});
+
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+var config = {"dark_mode": false, "show_silkscreen": true, "highlight_pin1": false, "redraw_on_drag": true, "board_rotation": 0, "checkboxes": "Sourced,Placed", "bom_view": "left-right", "layer_view": "FB", "extra_fields": []}
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+var pcbdata = {"edges_bbox": {"minx": 105.594999, "miny": 77.99499899999999, "maxx": 180.305001, "maxy": 101.005001}, "edges": [{"type": "segment", "start": [177.2, 78.0], "end": [180.29999999999998, 81.1], "width": 0.01}, {"type": "segment", "start": [178.1, 100.1], "end": [177.2, 101.0], "width": 0.01}, {"type": "segment", "start": [105.6, 98.8], "end": [107.8, 101.0], "width": 0.01}, {"type": "segment", "start": [107.8, 78.0], "end": [105.6, 80.2], "width": 0.01}, {"type": "segment", "start": [180.29999999999998, 84.0], "end": [180.29999999999998, 81.1], "width": 0.01}, {"type": "segment", "start": [177.0, 84.0], "end": [180.29999999999998, 84.0], "width": 0.01}, {"type": "segment", "start": [175.0, 86.0], "end": [177.0, 84.0], "width": 0.01}, {"type": "segment", "start": [170.0, 86.0], "end": [175.0, 86.0], "width": 0.01}, {"type": "segment", "start": [170.0, 93.0], "end": [170.0, 86.0], "width": 0.01}, {"type": "segment", "start": [173.0, 94.0], "end": [170.0, 93.0], "width": 0.01}, {"type": "segment", "start": [178.1, 94.0], "end": [173.0, 94.0], "width": 0.01}, {"type": "segment", "start": [105.6, 98.8], "end": [105.6, 80.2], "width": 0.01}, {"type": "segment", "start": [177.2, 101.0], "end": [107.8, 101.0], "width": 0.01}, {"type": "segment", "start": [178.1, 94.0], "end": [178.1, 100.1], "width": 0.01}, {"type": "segment", "start": [107.8, 78.0], "end": [177.2, 78.0], "width": 0.01}], "silkscreen": {"F": [{"pos": [118.1, 99.69999999999999], "text": "U4", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [169.69, 100.63], "end": [116.69, 100.63], "width": 0.15}, {"type": "segment", "start": [169.69, 78.13], "end": [169.69, 100.63], "width": 0.15}, {"type": "segment", "start": [116.69, 78.13], "end": [169.69, 78.13], "width": 0.15}, {"type": "segment", "start": [116.69, 100.63], "end": [116.69, 78.13], "width": 0.15}, {"type": "segment", "start": [121.28999999999999, 85.58], "end": [116.78999999999999, 85.58], "width": 0.15}, {"type": "segment", "start": [121.28999999999999, 93.17999999999999], "end": [121.28999999999999, 85.58], "width": 0.15}, {"type": "segment", "start": [116.78999999999999, 93.17999999999999], "end": [121.28999999999999, 93.17999999999999], "width": 0.15}, {"pos": [148.57399999999998, 93.18599999999999], "text": "U3", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [150.649, 92.211], "end": [152.049, 92.211], "width": 0.15}, {"type": "segment", "start": [150.649, 87.11099999999999], "end": [146.499, 87.11099999999999], "width": 0.15}, {"type": "segment", "start": [150.649, 92.261], "end": [146.499, 92.261], "width": 0.15}, {"type": "segment", "start": [150.649, 87.11099999999999], "end": [150.649, 87.256], "width": 0.15}, {"type": "segment", "start": [146.499, 87.11099999999999], "end": [146.499, 87.256], "width": 0.15}, {"type": "segment", "start": [146.499, 92.261], "end": [146.499, 92.116], "width": 0.15}, {"type": "segment", "start": [150.649, 92.261], "end": [150.649, 92.211], "width": 0.15}, {"pos": [132.686, 86.40599999999999], "text": "U1", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [130.611, 87.381], "end": [129.21099999999998, 87.381], "width": 0.15}, {"type": "segment", "start": [130.611, 92.481], "end": [134.761, 92.481], "width": 0.15}, {"type": "segment", "start": [130.611, 87.331], "end": [134.761, 87.331], "width": 0.15}, {"type": "segment", "start": [130.611, 92.481], "end": [130.611, 92.336], "width": 0.15}, {"type": "segment", "start": [134.761, 92.481], "end": [134.761, 92.336], "width": 0.15}, {"type": "segment", "start": [134.761, 87.331], "end": [134.761, 87.476], "width": 0.15}, {"type": "segment", "start": [130.611, 87.331], "end": [130.611, 87.381], "width": 0.15}, {"pos": [168.5, 83.7], "text": "Q2", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [167.17999999999998, 90.97], "end": [167.17999999999998, 92.07], "width": 0.12}, {"type": "segment", "start": [167.45, 90.97], "end": [167.17999999999998, 90.97], "width": 0.12}, {"type": "segment", "start": [167.45, 89.47], "end": [167.45, 90.97], "width": 0.12}, {"type": "segment", "start": [160.82, 90.97], "end": [160.82, 93.8], "width": 0.12}, {"type": "segment", "start": [160.54999999999998, 90.97], "end": [160.82, 90.97], "width": 0.12}, {"type": "segment", "start": [160.54999999999998, 89.47], "end": [160.54999999999998, 90.97], "width": 0.12}, {"pos": [157.0, 93.3], "text": "Q1", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [156.92, 92.25999999999999], "end": [156.92, 90.8], "width": 0.12}, {"type": "segment", "start": [160.07999999999998, 92.25999999999999], "end": [160.07999999999998, 90.1], "width": 0.12}, {"type": "segment", "start": [160.07999999999998, 92.25999999999999], "end": [159.15, 92.25999999999999], "width": 0.12}, {"type": "segment", "start": [156.92, 92.25999999999999], "end": [157.85, 92.25999999999999], "width": 0.12}, {"pos": [171.28, 78.8], "text": "J2", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [179.98, 78.97], "end": [179.98, 78.36999999999999], "width": 0.12}, {"type": "segment", "start": [178.38, 78.97], "end": [179.98, 78.97], "width": 0.12}, {"type": "segment", "start": [178.38, 78.36999999999999], "end": [178.38, 78.97], "width": 0.12}, {"type": "segment", "start": [177.44, 78.97], "end": [177.44, 78.36999999999999], "width": 0.12}, {"type": "segment", "start": [175.84, 78.97], "end": [177.44, 78.97], "width": 0.12}, {"type": "segment", "start": [175.84, 78.36999999999999], "end": [175.84, 78.97], "width": 0.12}, {"type": "segment", "start": [174.9, 78.97], "end": [174.9, 78.36999999999999], "width": 0.12}, {"type": "segment", "start": [173.29999999999998, 78.97], "end": [174.9, 78.97], "width": 0.12}, {"type": "segment", "start": [173.29999999999998, 78.36999999999999], "end": [173.29999999999998, 78.97], "width": 0.12}, {"type": "segment", "start": [178.92999999999998, 84.39], "end": [178.92999999999998, 83.39], "width": 0.12}, {"type": "segment", "start": [174.35, 84.39], "end": [174.35, 83.39], "width": 0.12}, {"type": "segment", "start": [178.92999999999998, 82.86], "end": [179.17999999999998, 83.39], "width": 0.12}, {"type": "segment", "start": [174.35, 82.86], "end": [178.92999999999998, 82.86], "width": 0.12}, {"type": "segment", "start": [174.1, 83.39], "end": [174.35, 82.86], "width": 0.12}, {"type": "segment", "start": [179.17999999999998, 83.39], "end": [179.17999999999998, 84.39], "width": 0.12}, {"type": "segment", "start": [174.1, 83.39], "end": [179.17999999999998, 83.39], "width": 0.12}, {"type": "segment", "start": [174.1, 84.39], "end": [174.1, 83.39], "width": 0.12}, {"type": "segment", "start": [172.42999999999998, 79.39999999999999], "end": [172.42999999999998, 83.39999999999999], "width": 0.12}, {"type": "segment", "start": [180.56, 78.36999999999999], "end": [172.72, 78.36999999999999], "width": 0.12}, {"type": "segment", "start": [180.56, 84.39], "end": [180.56, 78.36999999999999], "width": 0.12}, {"type": "segment", "start": [172.72, 84.39], "end": [180.56, 84.39], "width": 0.12}, {"type": "segment", "start": [172.72, 78.36999999999999], "end": [172.72, 84.39], "width": 0.12}, {"pos": [170.79999999999998, 97.5], "text": "J1", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [172.85999999999999, 99.92999999999999], "end": [172.85999999999999, 100.53], "width": 0.12}, {"type": "segment", "start": [174.45999999999998, 99.92999999999999], "end": [172.85999999999999, 99.92999999999999], "width": 0.12}, {"type": "segment", "start": [174.45999999999998, 100.53], "end": [174.45999999999998, 99.92999999999999], "width": 0.12}, {"type": "segment", "start": [175.4, 99.92999999999999], "end": [175.4, 100.53], "width": 0.12}, {"type": "segment", "start": [177.0, 99.92999999999999], "end": [175.4, 99.92999999999999], "width": 0.12}, {"type": "segment", "start": [177.0, 100.53], "end": [177.0, 99.92999999999999], "width": 0.12}, {"type": "segment", "start": [173.91, 94.50999999999999], "end": [173.91, 95.50999999999999], "width": 0.12}, {"type": "segment", "start": [175.95, 94.50999999999999], "end": [175.95, 95.50999999999999], "width": 0.12}, {"type": "segment", "start": [173.91, 96.03999999999999], "end": [173.66, 95.50999999999999], "width": 0.12}, {"type": "segment", "start": [175.95, 96.03999999999999], "end": [173.91, 96.03999999999999], "width": 0.12}, {"type": "segment", "start": [176.2, 95.50999999999999], "end": [175.95, 96.03999999999999], "width": 0.12}, {"type": "segment", "start": [173.66, 95.50999999999999], "end": [173.66, 94.50999999999999], "width": 0.12}, {"type": "segment", "start": [176.2, 95.50999999999999], "end": [173.66, 95.50999999999999], "width": 0.12}, {"type": "segment", "start": [176.2, 94.50999999999999], "end": [176.2, 95.50999999999999], "width": 0.12}, {"type": "segment", "start": [177.87, 99.5], "end": [177.87, 95.5], "width": 0.12}, {"type": "segment", "start": [172.28, 100.53], "end": [177.57999999999998, 100.53], "width": 0.12}, {"type": "segment", "start": [172.28, 94.50999999999999], "end": [172.28, 100.53], "width": 0.12}, {"type": "segment", "start": [177.57999999999998, 94.50999999999999], "end": [172.28, 94.50999999999999], "width": 0.12}, {"type": "segment", "start": [177.57999999999998, 100.53], "end": [177.57999999999998, 94.50999999999999], "width": 0.12}, {"pos": [141.0, 89.6], "text": "R13", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [142.841422, 88.71], "end": [143.358578, 88.71], "width": 0.12}, {"type": "segment", "start": [142.841422, 87.28999999999999], "end": [143.358578, 87.28999999999999], "width": 0.12}, {"pos": [140.4, 94.8], "text": "R9", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [141.10999999999999, 92.65857799999999], "end": [141.10999999999999, 92.14142199999999], "width": 0.12}, {"type": "segment", "start": [139.69, 92.65857799999999], "end": [139.69, 92.14142199999999], "width": 0.12}, {"pos": [121.0, 94.69999999999999], "text": "D1", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [119.75, 93.6], "end": [115.44999999999999, 93.6], "width": 0.12}, {"type": "segment", "start": [119.75, 95.6], "end": [119.75, 93.6], "width": 0.12}, {"type": "segment", "start": [115.44999999999999, 95.6], "end": [119.75, 95.6], "width": 0.12}, {"pos": [156.4, 88.6], "text": "R8", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [158.241422, 89.21], "end": [158.758578, 89.21], "width": 0.12}, {"type": "segment", "start": [158.241422, 87.78999999999999], "end": [158.758578, 87.78999999999999], "width": 0.12}, {"pos": [155.54, 79.55], "text": "R12", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [152.298578, 78.74], "end": [151.781422, 78.74], "width": 0.12}, {"type": "segment", "start": [152.298578, 80.16], "end": [151.781422, 80.16], "width": 0.12}, {"pos": [145.13, 79.47], "text": "R11", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [148.788578, 78.75999999999999], "end": [148.271422, 78.75999999999999], "width": 0.12}, {"type": "segment", "start": [148.788578, 80.17999999999999], "end": [148.271422, 80.17999999999999], "width": 0.12}, {"pos": [148.75, 95.06], "text": "R10", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [149.008578, 92.7], "end": [148.491422, 92.7], "width": 0.12}, {"type": "segment", "start": [149.008578, 94.11999999999999], "end": [148.491422, 94.11999999999999], "width": 0.12}, {"pos": [126.0, 79.5], "text": "R7", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [128.958578, 78.69], "end": [128.441422, 78.69], "width": 0.12}, {"type": "segment", "start": [128.958578, 80.11], "end": [128.441422, 80.11], "width": 0.12}, {"pos": [134.75, 79.39999999999999], "text": "R6", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [131.841422, 80.11], "end": [132.358578, 80.11], "width": 0.12}, {"type": "segment", "start": [131.841422, 78.69], "end": [132.358578, 78.69], "width": 0.12}, {"pos": [168.75, 89.5], "text": "R5", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [168.04, 91.741422], "end": [168.04, 92.258578], "width": 0.12}, {"type": "segment", "start": [169.45999999999998, 91.741422], "end": [169.45999999999998, 92.258578], "width": 0.12}, {"pos": [153.6, 85.7], "text": "R4", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [153.341422, 84.71], "end": [153.858578, 84.71], "width": 0.12}, {"type": "segment", "start": [153.341422, 83.28999999999999], "end": [153.858578, 83.28999999999999], "width": 0.12}, {"pos": [158.5, 84.85], "text": "R3", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [158.241422, 87.21], "end": [158.758578, 87.21], "width": 0.12}, {"type": "segment", "start": [158.241422, 85.78999999999999], "end": [158.758578, 85.78999999999999], "width": 0.12}, {"pos": [154.1, 92.3], "text": "R2", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [154.358578, 89.99], "end": [153.841422, 89.99], "width": 0.12}, {"type": "segment", "start": [154.358578, 91.41], "end": [153.841422, 91.41], "width": 0.12}, {"pos": [154.1, 87.3], "text": "R1", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [154.358578, 88.08999999999999], "end": [153.841422, 88.08999999999999], "width": 0.12}, {"type": "segment", "start": [154.358578, 89.50999999999999], "end": [153.841422, 89.50999999999999], "width": 0.12}, {"pos": [106.5, 82.3], "text": "J3", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [116.22999999999999, 78.77], "end": [116.22999999999999, 80.1], "width": 0.12}, {"type": "segment", "start": [114.89999999999999, 78.77], "end": [116.22999999999999, 78.77], "width": 0.12}, {"type": "segment", "start": [113.63, 78.77], "end": [113.63, 81.42999999999999], "width": 0.12}, {"type": "segment", "start": [113.63, 81.42999999999999], "end": [105.94999999999999, 81.42999999999999], "width": 0.12}, {"type": "segment", "start": [113.63, 78.77], "end": [105.94999999999999, 78.77], "width": 0.12}, {"type": "segment", "start": [105.94999999999999, 78.77], "end": [105.94999999999999, 81.42999999999999], "width": 0.12}, {"pos": [149.29999999999998, 85.7], "text": "C12", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [148.858578, 83.28999999999999], "end": [148.341422, 83.28999999999999], "width": 0.12}, {"type": "segment", "start": [148.858578, 84.71], "end": [148.341422, 84.71], "width": 0.12}, {"pos": [143.5, 93.8], "text": "C9", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [142.95999999999998, 91.041422], "end": [142.95999999999998, 91.558578], "width": 0.12}, {"type": "segment", "start": [144.38, 91.041422], "end": [144.38, 91.558578], "width": 0.12}, {"pos": [139.4, 85.1], "text": "C8", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [140.29, 84.741422], "end": [140.29, 85.258578], "width": 0.12}, {"type": "segment", "start": [141.70999999999998, 84.741422], "end": [141.70999999999998, 85.258578], "width": 0.12}, {"pos": [139.15, 87.5], "text": "C6", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [136.79, 87.241422], "end": [136.79, 87.758578], "width": 0.12}, {"type": "segment", "start": [138.20999999999998, 87.241422], "end": [138.20999999999998, 87.758578], "width": 0.12}, {"pos": [139.1, 91.2], "text": "C5", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [138.20999999999998, 91.258578], "end": [138.20999999999998, 90.741422], "width": 0.12}, {"type": "segment", "start": [136.79, 91.258578], "end": [136.79, 90.741422], "width": 0.12}, {"pos": [109.5, 94.69999999999999], "text": "C4", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [112.258578, 93.99], "end": [111.741422, 93.99], "width": 0.12}, {"type": "segment", "start": [112.258578, 95.41], "end": [111.741422, 95.41], "width": 0.12}, {"pos": [127.494, 88.48599999999999], "text": "C3", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [126.89, 90.64142199999999], "end": [126.89, 91.15857799999999], "width": 0.12}, {"type": "segment", "start": [128.31, 90.64142199999999], "end": [128.31, 91.15857799999999], "width": 0.12}, {"pos": [106.5, 93.7], "text": "C2", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [107.21, 91.358578], "end": [107.21, 90.841422], "width": 0.12}, {"type": "segment", "start": [105.78999999999999, 91.358578], "end": [105.78999999999999, 90.841422], "width": 0.12}, {"pos": [106.67, 84.6], "text": "RV2", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 90.0}, {"type": "segment", "start": [107.67, 85.42999999999999], "end": [107.67, 84.1], "width": 0.12}, {"type": "segment", "start": [109.0, 85.42999999999999], "end": [107.67, 85.42999999999999], "width": 0.12}, {"type": "segment", "start": [110.27, 85.42999999999999], "end": [110.27, 82.77], "width": 0.12}, {"type": "segment", "start": [110.27, 82.77], "end": [115.41, 82.77], "width": 0.12}, {"type": "segment", "start": [110.27, 85.42999999999999], "end": [115.41, 85.42999999999999], "width": 0.12}, {"type": "segment", "start": [115.41, 85.42999999999999], "end": [115.41, 82.77], "width": 0.12}, {"pos": [115.39999999999999, 86.89999999999999], "text": "U5", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [107.8, 86.28999999999999], "end": [113.80999999999999, 86.28999999999999], "width": 0.12}, {"type": "segment", "start": [110.05, 93.11], "end": [113.80999999999999, 93.11], "width": 0.12}, {"type": "segment", "start": [113.80999999999999, 86.28999999999999], "end": [113.80999999999999, 87.55], "width": 0.12}, {"type": "segment", "start": [113.80999999999999, 93.11], "end": [113.80999999999999, 91.85], "width": 0.12}, {"pos": [146.7, 86.2], "text": "U2", "height": 1.0, "width": 1.0, "horiz_justify": 0, "thickness": 0.15, "attr": [], "angle": 0.0}, {"type": "segment", "start": [142.48999999999998, 84.1], "end": [142.48999999999998, 86.55], "width": 0.12}, {"type": "segment", "start": [145.70999999999998, 85.89999999999999], "end": [145.70999999999998, 84.1], "width": 0.12}], "B": [{"pos": [163.5, 84.89999999999999], "text": "Chookity!", "height": 1.5, "width": 1.5, "horiz_justify": 0, "thickness": 0.3, "attr": ["mirrored", "italic"], "angle": 0.0}, {"pos": [143.79999999999998, 93.6], "text": "Soldering station control board \nRadovan Bla\u017eek 12/2018 Rev2", "height": 1.5, "width": 1.5, "horiz_justify": 0, "thickness": 0.3, "attr": ["mirrored", "italic"], "angle": 0.0}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[1.4478, 2.50825], [1.44145, 2.5019], [1.4351, 2.50825], [1.44145, 2.5145999999999997], [1.4478, 2.50825]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[0.357811, 0.6676679999999999], [0.40001899999999996, 0.63089], [0.42896399999999996, 0.5763229999999999], [0.439592, 0.530893], [0.443024, 0.46892399999999995], [0.432656, 0.42510899999999996], [0.407242, 0.395519], [0.394146, 0.387581], [0.34848399999999996, 0.37091199999999996], [0.30751, 0.374284], [0.278145, 0.387258], [0.254508, 0.410653], [0.23055399999999998, 0.45125499999999996], [0.209662, 0.50114], [0.195209, 0.5523859999999999], [0.1905, 0.592816], [0.201512, 0.637053], [0.23194099999999998, 0.6681549999999999], [0.27787, 0.6830269999999999], [0.305181, 0.683429], [0.357811, 0.6676679999999999]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[-0.596513, 0.69445], [-0.561975, 0.669945], [-0.5393399999999999, 0.6323259999999999], [-0.5337609999999999, 0.581141], [-0.545554, 0.521927], [-0.55245, 0.503609], [-0.565419, 0.46180499999999997], [-0.5714469999999999, 0.421158], [-0.5715, 0.418014], [-0.5782619999999999, 0.384559], [-0.6011949999999999, 0.349728], [-0.620806, 0.328706], [-0.663824, 0.29350899999999996], [-0.70334, 0.280499], [-0.745311, 0.28829], [-0.762, 0.295834], [-0.8000879999999999, 0.326855], [-0.81787, 0.37171699999999996], [-0.8157, 0.43149899999999997], [-0.812183, 0.44847299999999996], [-0.78848, 0.533391], [-0.761112, 0.604239], [-0.731746, 0.657517], [-0.702043, 0.6897249999999999], [-0.6955939999999999, 0.693653], [-0.64584, 0.70645], [-0.596513, 0.69445]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[1.316566, -0.004233], [1.3180859999999999, -0.019305], [1.316566, -0.021165999999999997], [1.309016, -0.019423], [1.3081, -0.0127], [1.312746, -0.0022459999999999997], [1.316566, -0.004233]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[1.45706, -0.589227], [1.453272, -0.594999], [1.440391, -0.595897], [1.4268399999999999, -0.592795], [1.432718, -0.588224], [1.452567, -0.58671], [1.45706, -0.589227]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[1.45706, -0.6146269999999999], [1.453272, -0.6203989999999999], [1.440391, -0.621297], [1.4268399999999999, -0.6181949999999999], [1.432718, -0.613624], [1.452567, -0.6121099999999999], [1.45706, -0.6146269999999999]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[1.46976, -0.652727], [1.4659719999999998, -0.658499], [1.453091, -0.659397], [1.43954, -0.656295], [1.4454179999999999, -0.651724], [1.4652669999999999, -0.65021], [1.46976, -0.652727]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[-1.07151, -0.13022699999999998], [-1.0457349999999999, -0.14371599999999998], [-1.0181719999999999, -0.17318], [-1.017, -0.174625], [-0.98951, -0.20849299999999998], [-0.953411, -0.252828], [-0.916186, -0.298441], [-0.913634, -0.301564], [-0.867196, -0.351523], [-0.806454, -0.407205], [-0.738154, -0.46324299999999996], [-0.6690459999999999, -0.514272], [-0.605878, -0.554926], [-0.573004, -0.572404], [-0.50091, -0.602578], [-0.415417, -0.6325189999999999], [-0.324874, -0.6597799999999999], [-0.23763299999999998, -0.6819149999999999], [-0.162043, -0.6964779999999999], [-0.1397, -0.699352], [0.015834, -0.711191], [0.15351099999999998, -0.711191], [0.278283, -0.698691], [0.39510399999999996, -0.6730269999999999], [0.508925, -0.633537], [0.576753, -0.603449], [0.63257, -0.575463], [0.6763129999999999, -0.5491039999999999], [0.7155199999999999, -0.51871], [0.757729, -0.478618], [0.795721, -0.43895799999999996], [0.842151, -0.390633], [0.8761099999999999, -0.358661], [0.9015259999999999, -0.33999799999999997], [0.922329, -0.3316], [0.9361299999999999, -0.3302], [0.985491, -0.34115], [1.0225549999999999, -0.370365], [1.044104, -0.412387], [1.0469249999999999, -0.461758], [1.03552, -0.498864], [1.012923, -0.53416], [0.97566, -0.579638], [0.929103, -0.6298699999999999], [0.878622, -0.679425], [0.8295889999999999, -0.722876], [0.787373, -0.754792], [0.7746999999999999, -0.762512], [0.639095, -0.8297439999999999], [0.502555, -0.8831629999999999], [0.41429299999999997, -0.9095439999999999], [0.36574, -0.9211499999999999], [0.32134599999999997, -0.929256], [0.274837, -0.934406], [0.219936, -0.937145], [0.150366, -0.9380189999999999], [0.08889999999999999, -0.937807], [0.011614, -0.9367479999999999], [-0.06310299999999999, -0.9348069999999999], [-0.128774, -0.932217], [-0.178921, -0.92921], [-0.19685, -0.927543], [-0.26359099999999996, -0.915972], [-0.34569, -0.895845], [-0.43555699999999997, -0.869494], [-0.525604, -0.8392529999999999], [-0.6082409999999999, -0.8074549999999999], [-0.6554679999999999, -0.7865439999999999], [-0.737787, -0.7420789999999999], [-0.821843, -0.687091], [-0.904771, -0.624393], [-0.983711, -0.556801], [-1.055798, -0.487129], [-1.118171, -0.418193], [-1.167967, -0.352808], [-1.202322, -0.29378899999999997], [-1.218375, -0.243951], [-1.219201, -0.23219499999999998], [-1.2079849999999999, -0.183856], [-1.1771129999999999, -0.14821399999999998], [-1.130747, -0.129143], [-1.106195, -0.127], [-1.07151, -0.13022699999999998]]]}, {"type": "polygon", "pos": [118.5, 90.89999999999999], "angle": [180.0], "polygons": [[[1.859076, 3.0171799999999998], [1.903935, 2.999834], [1.937423, 2.9661299999999997], [1.962186, 2.912709], [1.9734079999999998, 2.872169], [1.98878, 2.7890219999999997], [2.001497, 2.6854329999999997], [2.011463, 2.5662309999999997], [2.0185839999999997, 2.436244], [2.0227649999999997, 2.300303], [2.0239089999999997, 2.163235], [2.0219229999999997, 2.0298689999999997], [2.01671, 1.905034], [2.0081759999999997, 1.7935599999999998], [1.9964769999999998, 1.7018], [1.983939, 1.6242699999999999], [1.9695349999999998, 1.5334059999999998], [1.9551209999999999, 1.4409999999999998], [1.94352, 1.3652499999999999], [1.9244819999999998, 1.246597], [1.903996, 1.131704], [1.8829699999999998, 1.02498], [1.8623129999999999, 0.930835], [1.8429339999999999, 0.8536769999999999], [1.827847, 0.803877], [1.811821, 0.753863], [1.793737, 0.692082], [1.7773789999999998, 0.6314879999999999], [1.776656, 0.6286499999999999], [1.7639589999999998, 0.581565], [1.7454969999999999, 0.516936], [1.7232239999999999, 0.441419], [1.699093, 0.36167], [1.6834719999999999, 0.31115], [1.652965, 0.21345799999999998], [1.6292909999999998, 0.13641799999999998], [1.6119269999999999, 0.07636899999999999], [1.6003509999999999, 0.02965], [1.5940409999999998, -0.007398], [1.5924749999999999, -0.038436], [1.595129, -0.067123], [1.6014819999999999, -0.097121], [1.611011, -0.13208899999999998], [1.617125, -0.153725], [1.635158, -0.220492], [1.656216, -0.302558], [1.679365, -0.39588599999999996], [1.703668, -0.49644], [1.728191, -0.600181], [1.751998, -0.703073], [1.774154, -0.801079], [1.7937239999999999, -0.890162], [1.8097729999999999, -0.9662839999999999], [1.821365, -1.025409], [1.8271739999999999, -1.06045], [1.846628, -1.210125], [1.8646939999999999, -1.3581239999999999], [1.8807459999999998, -1.4989169999999998], [1.894158, -1.626971], [1.904307, -1.7367569999999999], [1.9061219999999999, -1.75895], [1.9114399999999998, -1.8422319999999999], [1.9156559999999998, -1.940915], [1.918726, -2.049636], [1.9206079999999999, -2.163035], [1.9212589999999998, -2.275749], [1.920637, -2.382416], [1.9186999999999999, -2.4776759999999998], [1.915403, -2.5561659999999997], [1.912745, -2.593101], [1.9028649999999998, -2.7033519999999998], [1.678245, -2.7114499999999997], [1.678107, -2.48285], [1.674775, -2.328595], [1.6654339999999999, -2.1577219999999997], [1.650807, -1.978108], [1.631616, -1.797625], [1.621422, -1.72085], [1.6637, -1.72085], [1.67005, -1.7271999999999998], [1.6764, -1.72085], [1.67005, -1.7145], [1.6637, -1.72085], [1.621422, -1.72085], [1.608582, -1.62415], [1.587262, -1.4922499999999999], [1.571197, -1.400766], [1.5528959999999998, -1.295094], [1.534228, -1.186111], [1.5170629999999998, -1.084693], [1.510881, -1.04775], [1.498287, -0.972688], [1.4867249999999999, -0.9047419999999999], [1.476991, -0.848521], [1.469882, -0.8086329999999999], [1.466403, -0.7905749999999999], [1.466934, -0.7673559999999999], [1.478818, -0.762], [1.491031, -0.768013], [1.502287, -0.787812], [1.5133219999999998, -0.824032], [1.524876, -0.879308], [1.537687, -0.9562769999999999], [1.5428659999999998, -0.9905999999999999], [1.5576969999999999, -1.08435], [1.577365, -1.198437], [1.6010719999999998, -1.32843], [1.628021, -1.4699], [1.643618, -1.5493999999999999], [1.662493, -1.64465], [1.655735, -1.55575], [1.650594, -1.501707], [1.6439629999999998, -1.4498719999999998], [1.638163, -1.41605], [1.6316249999999999, -1.377259], [1.624919, -1.324587], [1.619548, -1.27], [1.6119979999999998, -1.192453], [1.6016489999999999, -1.114258], [1.587445, -1.028835], [1.568331, -0.9296059999999999], [1.553337, -0.85725], [1.536942, -0.782401], [1.517854, -0.6997099999999999], [1.4970219999999999, -0.612849], [1.475395, -0.525489], [1.4539229999999999, -0.441303], [1.433554, -0.363962], [1.415239, -0.297139], [1.399926, -0.244505], [1.3885649999999998, -0.209734], [1.382614, -0.19685], [1.374825, -0.19530799999999998], [1.3773529999999998, -0.21589999999999998], [1.385964, -0.255185], [1.395293, -0.302483], [1.404197, -0.351277], [1.411536, -0.395047], [1.416167, -0.42727699999999996], [1.416949, -0.441448], [1.416869, -0.441563], [1.408208, -0.43484399999999995], [1.39195, -0.41348199999999996], [1.389576, -0.409971], [1.3729179999999999, -0.369898], [1.363057, -0.30866899999999997], [1.3609799999999999, -0.2794], [1.3568, -0.232341], [1.3503859999999999, -0.19563699999999998], [1.3430199999999999, -0.176286], [1.341917, -0.175315], [1.334803, -0.158679], [1.32938, -0.12211599999999999], [1.3263989999999999, -0.071083], [1.326184, -0.061015], [1.320172, 0.009337], [1.305094, 0.097026], [1.2824959999999999, 0.19630799999999998], [1.253924, 0.301444], [1.220921, 0.40669099999999997], [1.185034, 0.506307], [1.152544, 0.5841999999999999], [1.130469, 0.6337309999999999], [1.1075629999999999, 0.686095], [1.102218, 0.6985], [1.0801969999999999, 0.741568], [1.05007, 0.790553], [1.029979, 0.8191499999999999], [0.998972, 0.863065], [0.963301, 0.9175169999999999], [0.9306129999999999, 0.970827], [0.9301889999999999, 0.9715499999999999], [0.8997109999999999, 1.02297], [0.868672, 1.074314], [0.843505, 1.114951], [0.8422919999999999, 1.1168639999999999], [0.8191919999999999, 1.153804], [0.8003709999999999, 1.1849079999999999], [0.794067, 1.195882], [0.7674909999999999, 1.221379], [0.718266, 1.240978], [0.66675, 1.2519799999999999], [0.621979, 1.263955], [0.580208, 1.2820099999999999], [0.576456, 1.284181], [0.538173, 1.3040399999999999], [0.49297399999999997, 1.323337], [0.48284299999999997, 1.327065], [0.450702, 1.337751], [0.438113, 1.339264], [0.440947, 1.33161], [0.444517, 1.32713], [0.450766, 1.312112], [0.440088, 1.306813], [0.41861099999999996, 1.310295], [0.392465, 1.32162], [0.368994, 1.338685], [0.341761, 1.359872], [0.300432, 1.387022], [0.253537, 1.414561], [0.249469, 1.416796], [0.179277, 1.4551049999999999], [0.8128, 1.4551049999999999], [0.8227089999999999, 1.440221], [0.848362, 1.417889], [0.875435, 1.398792], [0.958766, 1.331556], [1.034505, 1.244254], [1.096605, 1.1450259999999999], [1.129181, 1.087848], [1.167949, 1.0266279999999999], [1.200804, 0.9797199999999999], [1.239843, 0.92074], [1.282938, 0.8438329999999999], [1.327008, 0.755448], [1.368967, 0.662032], [1.405734, 0.570035], [1.429336, 0.50179], [1.46542, 0.387629], [1.488689, 0.46369], [1.4997449999999999, 0.502354], [1.5150979999999998, 0.5595129999999999], [1.5331279999999998, 0.628958], [1.5522129999999998, 0.704484], [1.563292, 0.7493], [1.5853059999999999, 0.841425], [1.609532, 0.9465169999999999], [1.6333389999999999, 1.052937], [1.6540899999999998, 1.1490479999999998], [1.658134, 1.168374], [1.673241, 1.2378879999999999], [1.6876179999999998, 1.298165], [1.7001659999999998, 1.345022], [1.709782, 1.374277], [1.714421, 1.382158], [1.720999, 1.396054], [1.725611, 1.428153], [1.7271999999999998, 1.467909], [1.728745, 1.509645], [1.7327839999999999, 1.539031], [1.7380769999999999, 1.5493999999999999], [1.742921, 1.561362], [1.749601, 1.594538], [1.757472, 1.644863], [1.765888, 1.7082739999999998], [1.772883, 1.768475], [1.7800909999999999, 1.847689], [1.785869, 1.937633], [1.790171, 2.0339229999999997], [1.792949, 2.1321749999999997], [1.7941559999999999, 2.228004], [1.793745, 2.317025], [1.791669, 2.3948549999999997], [1.787879, 2.457108], [1.78233, 2.4994009999999998], [1.780829, 2.505735], [1.775594, 2.522283], [1.7691219999999999, 2.527879], [1.7579749999999998, 2.520137], [1.7387139999999999, 2.496666], [1.707908, 2.455094], [1.6787759999999998, 2.413213], [1.656731, 2.3773839999999997], [1.6454119999999999, 2.3536729999999997], [1.64465, 2.34966], [1.6332559999999998, 2.333522], [1.6097249999999999, 2.326432], [1.582773, 2.317484], [1.574802, 2.296356], [1.5748, 2.295854], [1.565477, 2.277679], [1.537609, 2.242476], [1.491345, 2.190411], [1.426837, 2.121651], [1.344233, 2.036362], [1.297332, 1.9887219999999999], [1.191945, 1.8813499999999999], [1.097151, 1.78314], [1.0140559999999998, 1.6953129999999998], [0.9437679999999999, 1.619087], [0.8873939999999999, 1.555683], [0.84604, 1.5063179999999998], [0.820816, 1.472214], [0.8128, 1.4551049999999999], [0.179277, 1.4551049999999999], [0.162388, 1.464322], [-0.018786999999999998, 1.4560899999999999], [-0.107441, 1.450634], [-0.17806, 1.443285], [-0.227784, 1.434388], [-0.24562299999999998, 1.428779], [-0.286783, 1.415843], [-0.326198, 1.4097659999999999], [-0.329536, 1.4097], [-0.391966, 1.399513], [-0.46371599999999996, 1.368669], [-0.5454439999999999, 1.3167449999999998], [-0.637813, 1.243315], [-0.741481, 1.147957], [-0.7493, 1.1403299999999998], [-0.7858069999999999, 1.103634], [-0.818622, 1.067926], [-0.8493489999999999, 1.030581], [-0.8795949999999999, 0.9889739999999999], [-0.9109649999999999, 0.94048], [-0.9450639999999999, 0.882473], [-0.983497, 0.8123279999999999], [-1.02787, 0.727421], [-1.079788, 0.625126], [-1.1408559999999999, 0.502817], [-1.1482029999999999, 0.48802599999999996], [-1.211045, 0.360921], [-1.263301, 0.253914], [-1.306069, 0.16455], [-1.340449, 0.090375], [-1.367538, 0.028933], [-1.388437, -0.022229], [-1.404242, -0.065568], [-1.416054, -0.10353699999999999], [-1.420647, -0.12065], [-1.459264, -0.273905], [-1.4930839999999999, -0.411599], [-1.521641, -0.531759], [-1.544473, -0.632415], [-1.561116, -0.711595], [-1.567049, -0.74295], [-1.5757839999999999, -0.793017], [-1.5877459999999999, -0.863377], [-1.602145, -0.9492459999999999], [-1.618193, -1.0458349999999998], [-1.6351, -1.148359], [-1.652078, -1.25203], [-1.668337, -1.3520619999999999], [-1.6830889999999998, -1.4436689999999999], [-1.695544, -1.5220639999999999], [-1.6968459999999999, -1.5303499999999999], [-1.7079909999999998, -1.6011499999999999], [-1.7205869999999999, -1.680817], [-1.732071, -1.753136], [-1.7329979999999998, -1.75895], [-1.741124, -1.81994], [-1.7488679999999999, -1.895584], [-1.755224, -1.9751409999999998], [-1.758527, -2.032], [-1.763779, -2.109305], [-1.7721959999999999, -2.1928479999999997], [-1.7824849999999999, -2.2710209999999997], [-1.7903799999999999, -2.3177499999999998], [-1.802268, -2.3894439999999997], [-1.8130789999999999, -2.472581], [-1.821087, -2.553212], [-1.823187, -2.582785], [-1.831451, -2.72082], [-1.916763, -2.712414], [-1.973655, -2.7096959999999997], [-2.019571, -2.7130129999999997], [-2.037546, -2.717494], [-2.061412, -2.725186], [-2.069322, -2.719157], [-2.066627, -2.694101], [-2.0658279999999998, -2.6894649999999998], [-2.061788, -2.658287], [-2.057073, -2.6100849999999998], [-2.0524649999999998, -2.5531919999999997], [-2.050655, -2.5273], [-2.044485, -2.458589], [-2.034856, -2.3785689999999997], [-2.023469, -2.300799], [-2.018792, -2.2733], [-2.007612, -2.200306], [-1.9974779999999999, -2.115391], [-1.9899, -2.03203], [-1.9874779999999999, -1.9939], [-1.9818369999999998, -1.907927], [-1.973204, -1.8173949999999999], [-1.961021, -1.718046], [-1.944726, -1.605623], [-1.923759, -1.47587], [-1.904742, -1.3652499999999999], [-1.8807639999999999, -1.2266139999999999], [-1.857716, -1.089789], [-1.836549, -0.9605769999999999], [-1.818214, -0.8447859999999999], [-1.80382, -0.7493], [-1.7948169999999999, -0.6975709999999999], [-1.780061, -0.625169], [-1.760441, -0.5359389999999999], [-1.736845, -0.43372299999999997], [-1.7101629999999999, -0.322365], [-1.681284, -0.205708], [-1.651096, -0.087597], [-1.648178, -0.076386], [-1.6261619999999999, -0.001749], [-1.598865, 0.076443], [-1.57036, 0.14696299999999998], [-1.556042, 0.177614], [-1.5256669999999999, 0.239726], [-1.493739, 0.30727699999999997], [-1.466168, 0.367712], [-1.4610269999999999, 0.37937099999999996], [-1.4201249999999999, 0.47299199999999997], [-1.4586409999999999, 0.5081709999999999], [-1.493931, 0.548069], [-1.53544, 0.607405], [-1.580843, 0.681696], [-1.6278169999999998, 0.7664599999999999], [-1.674037, 0.8572139999999999], [-1.71718, 0.949475], [-1.754921, 1.038762], [-1.7849359999999999, 1.120591], [-1.797661, 1.16205], [-1.8279509999999999, 1.310072], [-1.841184, 1.474044], [-1.8385939999999998, 1.596188], [-1.609129, 1.596188], [-1.606638, 1.4244999999999999], [-1.584145, 1.2681989999999999], [-1.575496, 1.2319], [-1.559855, 1.1815339999999999], [-1.536764, 1.120307], [-1.5081179999999998, 1.052046], [-1.4758149999999999, 0.980582], [-1.441751, 0.9097419999999999], [-1.4078199999999998, 0.8433569999999999], [-1.37592, 0.785253], [-1.347947, 0.739262], [-1.325796, 0.70921], [-1.311555, 0.698915], [-1.302935, 0.709739], [-1.284387, 0.739769], [-1.257798, 0.7857219999999999], [-1.225051, 0.844318], [-1.188033, 0.912275], [-1.17475, 0.93704], [-1.131955, 1.016757], [-1.0979189999999999, 1.0783829999999999], [-1.0695649999999999, 1.126303], [-1.043814, 1.164898], [-1.0175859999999999, 1.198551], [-0.987803, 1.231644], [-0.951387, 1.26856], [-0.92075, 1.298582], [-0.864634, 1.351559], [-0.805039, 1.404928], [-0.748983, 1.4525629999999998], [-0.703487, 1.4883389999999999], [-0.702472, 1.489082], [-0.661741, 1.519863], [-0.630184, 1.545672], [-0.612537, 1.5625449999999999], [-0.610397, 1.566134], [-0.6181599999999999, 1.585607], [-0.641342, 1.619746], [-0.670871, 1.6573499999999999], [-0.613263, 1.6573499999999999], [-0.5909209999999999, 1.622425], [-0.57231, 1.599194], [-0.555371, 1.586627], [-0.546389, 1.58904], [-0.5461, 1.591637], [-0.554464, 1.602029], [-0.5750529999999999, 1.622279], [-0.5796819999999999, 1.6265619999999998], [-0.613263, 1.6573499999999999], [-0.670871, 1.6573499999999999], [-0.677221, 1.665435], [-0.72308, 1.719557], [-0.776199, 1.778994], [-0.8338599999999999, 1.840631], [-0.893343, 1.9013499999999999], [-0.9519289999999999, 1.9580359999999999], [-0.953911, 1.9598909999999998], [-1.026992, 2.028981], [-1.083748, 2.0850049999999998], [-1.127009, 2.131577], [-1.159607, 2.1723079999999997], [-1.184374, 2.2108119999999998], [-1.204142, 2.2506999999999997], [-1.221741, 2.2955859999999997], [-1.225625, 2.306555], [-1.2421419999999999, 2.349671], [-1.257301, 2.382109], [-1.2680559999999998, 2.397431], [-1.2687629999999999, 2.397771], [-1.286277, 2.3927199999999997], [-1.316465, 2.37419], [-1.3538489999999999, 2.34647], [-1.392949, 2.31385], [-1.428288, 2.2806189999999997], [-1.451741, 2.25451], [-1.47637, 2.22028], [-1.4963, 2.184167], [-1.5135969999999999, 2.140748], [-1.53033, 2.0846], [-1.5485659999999999, 2.010299], [-1.554095, 1.986071], [-1.591615, 1.78335], [-1.609129, 1.596188], [-1.8385939999999998, 1.596188], [-1.837427, 1.651158], [-1.816749, 1.8386049999999998], [-1.779215, 2.033575], [-1.776643, 2.0445439999999997], [-1.7519129999999998, 2.141445], [-1.726005, 2.222849], [-1.696083, 2.292823], [-1.6593099999999998, 2.355436], [-1.61285, 2.4147559999999997], [-1.553864, 2.47485], [-1.4795179999999999, 2.539786], [-1.386973, 2.613633], [-1.371352, 2.625725], [-1.3051059999999999, 2.674123], [-1.252923, 2.704948], [-1.211339, 2.719013], [-1.176892, 2.717132], [-1.1461189999999999, 2.7001169999999997], [-1.127878, 2.682876], [-1.1032229999999998, 2.6538939999999998], [-1.08392, 2.6234669999999998], [-1.067229, 2.585525], [-1.050412, 2.5339959999999997], [-1.0338239999999999, 2.474423], [-1.0182449999999998, 2.419726], [-1.0026089999999999, 2.3706799999999997], [-0.989505, 2.3352209999999998], [-0.985607, 2.3267249999999997], [-0.9661759999999999, 2.299588], [-0.929295, 2.258266], [-0.877046, 2.2048069999999997], [-0.811511, 2.141261], [-0.734775, 2.069679], [-0.648918, 1.9921099999999998], [-0.61595, 1.962913], [-0.555671, 1.9096449999999998], [-0.492239, 1.8533199999999999], [-0.43284599999999995, 1.800339], [-0.38468399999999997, 1.757105], [-0.381, 1.753779], [-0.28575, 1.667722], [-0.10794999999999999, 1.6848619999999999], [0.000486, 1.6934509999999998], [0.088654, 1.695811], [0.16100799999999998, 1.6915499999999999], [0.221999, 1.680278], [0.27608099999999997, 1.6616039999999999], [0.303076, 1.6487729999999998], [0.35009399999999996, 1.626224], [0.40408099999999997, 1.603098], [0.459595, 1.581376], [0.5111939999999999, 1.563041], [0.553437, 1.550073], [0.580882, 1.544454], [0.5876279999999999, 1.545169], [0.6002419999999999, 1.5612899999999998], [0.609391, 1.5806019999999998], [0.6269279999999999, 1.6030499999999999], [0.6619649999999999, 1.615823], [0.6712079999999999, 1.617475], [0.7008679999999999, 1.6237549999999998], [0.718613, 1.635077], [0.7307929999999999, 1.658262], [0.741776, 1.693293], [0.75935, 1.7403039999999999], [0.780203, 1.767458], [0.7931239999999999, 1.775405], [0.8189639999999999, 1.796544], [0.841255, 1.829705], [0.843888, 1.835527], [0.8592839999999999, 1.859011], [0.892122, 1.8985299999999998], [0.9412419999999999, 1.9528249999999998], [1.005483, 2.020637], [1.0836839999999999, 2.100707], [1.1472419999999999, 2.164505], [1.218005, 2.2357139999999998], [1.283463, 2.3029029999999997], [1.3412629999999999, 2.363552], [1.389052, 2.415142], [1.424475, 2.4551559999999997], [1.445179, 2.4810719999999997], [1.449103, 2.487546], [1.463446, 2.5142789999999997], [1.4752619999999999, 2.5271049999999997], [1.4763, 2.527301], [1.484828, 2.537629], [1.4859, 2.54635], [1.491906, 2.563263], [1.4969979999999998, 2.5654], [1.502443, 2.568206], [1.511617, 2.578156], [1.526084, 2.597549], [1.547408, 2.628683], [1.577153, 2.673858], [1.6168829999999998, 2.7353709999999998], [1.668162, 2.8155229999999998], [1.682995, 2.8387819999999997], [1.706789, 2.878409], [1.725314, 2.9133959999999997], [1.73247, 2.9302989999999998], [1.7477399999999998, 2.9563189999999997], [1.7743609999999999, 2.985566], [1.7809899999999999, 2.991418], [1.814341, 3.0139579999999997], [1.84482, 3.019174], [1.859076, 3.0171799999999998]]]}]}, "modules": [{"ref": "U4", "center": [143.19, 89.38], "bbox": {"pos": [116.614999, 78.054999], "size": [53.150002, 22.650002]}, "pads": [{"layers": ["F", "B"], "pos": [124.14, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0], "pin1": 1}, {"layers": ["F", "B"], "pos": [167.32, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [162.23999999999998, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [119.05999999999999, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [121.6, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [164.78, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [126.67999999999999, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [157.16, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [154.62, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [134.29999999999998, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [136.84, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [139.38, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [141.92, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [152.07999999999998, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [149.54, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [147.0, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [144.45999999999998, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [141.92, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [139.38, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [129.22, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [131.76, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [136.84, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [134.29999999999998, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [131.76, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [129.22, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [119.05999999999999, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [121.6, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [124.14, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [126.67999999999999, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [144.45999999999998, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [147.0, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [149.54, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [152.07999999999998, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [154.62, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [157.16, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [159.7, 97.0], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [164.78, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [162.23999999999998, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [159.7, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [167.32, 81.75999999999999], "size": [1.524, 1.524], "angle": -90.0, "shape": "circle", "type": "th", "drillshape": "circle", "drillsize": [0.762, 0.762], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "REF**", "center": [133.0, 86.1], "bbox": {"pos": [126.57499899999999, 83.07499899999999], "size": [12.850002, 5.050002]}, "pads": [], "drawings": [{"layer": "B", "drawing": {"type": "polygon", "pos": [133.0, 86.1], "angle": [180.0], "polygons": [[[-2.273043, 2.973429], [-2.176768, 2.949191], [-2.090184, 2.9063589999999997], [-2.015373, 2.846581], [-1.954418, 2.771506], [-1.9093989999999998, 2.6827799999999997], [-1.883136, 2.58647], [-1.877286, 2.4892049999999997], [-1.89214, 2.395346], [-1.92584, 2.307489], [-1.9765279999999998, 2.22823], [-2.042345, 2.160164], [-2.121434, 2.1058879999999998], [-2.211934, 2.067998], [-2.2632, 2.055574], [-2.307698, 2.048053], [-2.341999, 2.0450809999999997], [-2.3749599999999997, 2.046906], [-2.415434, 2.053775], [-2.448531, 2.06075], [-2.541947, 2.092259], [-2.625619, 2.143383], [-2.6976649999999998, 2.212571], [-2.7561999999999998, 2.298272], [-2.770148, 2.325511], [-2.786586, 2.361878], [-2.796894, 2.3924179999999997], [-2.80246, 2.42455], [-2.804669, 2.465693], [-2.804948, 2.511778], [-2.800861, 2.596135], [-2.787446, 2.6654139999999997], [-2.762256, 2.7260389999999997], [-2.7228459999999997, 2.784433], [-2.684298, 2.8286979999999997], [-2.612406, 2.894516], [-2.5373129999999997, 2.939947], [-2.4545619999999997, 2.9671499999999997], [-2.376928, 2.977424], [-2.273043, 2.973429]]]}}, {"layer": "B", "drawing": {"type": "polygon", "pos": [133.0, 86.1], "angle": [180.0], "polygons": [[[6.186507, 0.527755], [6.186526, 0.293338], [6.186552, 0.080397], [6.186624999999999, -0.11216799999999999], [6.186782, -0.28545899999999996], [6.1870639999999995, -0.44057599999999997], [6.1875089999999995, -0.57862], [6.188155999999999, -0.700692], [6.189045, -0.807894], [6.190213, -0.901326], [6.191701, -0.9820899999999999], [6.1935459999999996, -1.051286], [6.1957889999999995, -1.110015], [6.198468999999999, -1.159379], [6.201623, -1.200478], [6.205292, -1.234413], [6.209512999999999, -1.262286], [6.214327, -1.2851979999999998], [6.219773, -1.304249], [6.225887999999999, -1.32054], [6.232711999999999, -1.335173], [6.240285, -1.349249], [6.248645, -1.3638679999999999], [6.253839, -1.372974], [6.288104, -1.433689], [5.429955, -1.433689], [5.429955, -1.3377329999999998], [5.429224, -1.29437], [5.427271999999999, -1.261205], [5.424462999999999, -1.2434239999999999], [5.423221, -1.241778], [5.411798999999999, -1.248662], [5.3890839999999995, -1.266505], [5.366385, -1.285879], [5.3118, -1.326614], [5.242321, -1.3676169999999999], [5.16527, -1.405123], [5.087965, -1.4353639999999999], [5.057113, -1.445012], [4.9886159999999995, -1.459578], [4.905764, -1.469539], [4.816371, -1.474583], [4.728248, -1.474396], [4.649207, -1.468666], [4.611511, -1.462858], [4.473414, -1.4247969999999999], [4.346113, -1.367073], [4.2302919999999995, -1.290211], [4.126637, -1.194739], [4.035833, -1.081179], [3.9690309999999998, -0.9703809999999999], [3.914164, -0.853625], [3.872163, -0.7342759999999999], [3.842167, -0.608283], [3.823311, -0.47159399999999996], [3.814732, -0.320158], [3.814006, -0.24271099999999998], [3.8161, -0.185934], [4.645217, -0.185934], [4.645424, -0.279002], [4.648337, -0.36669199999999996], [4.654, -0.443772], [4.662455, -0.5050089999999999], [4.665038, -0.51735], [4.69684, -0.624633], [4.738498, -0.711658], [4.790363, -0.778642], [4.852780999999999, -0.825805], [4.9261, -0.8533649999999999], [5.010669, -0.861541], [5.106834999999999, -0.850551], [5.170311, -0.8348289999999999], [5.219454, -0.816639], [5.2735829999999995, -0.7907909999999999], [5.3142439999999995, -0.7670889999999999], [5.384799999999999, -0.720721], [5.384799999999999, 0.42946999999999996], [5.317392, 0.47303799999999996], [5.238867, 0.51396], [5.154681, 0.540611], [5.069557, 0.552535], [4.9882159999999995, 0.5492779999999999], [4.91538, 0.530385], [4.883426, 0.5148159999999999], [4.825501, 0.471819], [4.7765439999999995, 0.415047], [4.73539, 0.342425], [4.700874, 0.25187899999999996], [4.6718329999999995, 0.141334], [4.670552, 0.135467], [4.660381, 0.073212], [4.6527389999999995, -0.004594], [4.64767, -0.09272], [4.645217, -0.185934], [3.8161, -0.185934], [3.8218569999999996, -0.029894999999999998], [3.8438019999999997, 0.165941], [3.8797859999999997, 0.344668], [3.929759, 0.506155], [3.993668, 0.650274], [4.0714619999999995, 0.776894], [4.163088999999999, 0.8858849999999999], [4.268497, 0.9771169999999999], [4.313662, 1.008068], [4.414611, 1.064215], [4.517901, 1.103826], [4.6279889999999995, 1.127986], [4.74933, 1.137781], [4.841836, 1.136735], [4.97149, 1.125769], [5.084084, 1.1039539999999999], [5.182875, 1.0702859999999998], [5.271121, 1.023764], [5.319986, 0.989552], [5.349353, 0.967638], [5.371042999999999, 0.9526669999999999], [5.379252999999999, 0.948267], [5.3808679999999995, 0.959096], [5.382159, 0.989749], [5.383138, 1.037474], [5.383817, 1.099521], [5.3842099999999995, 1.173138], [5.384329999999999, 1.255573], [5.384188, 1.344075], [5.3837969999999995, 1.4358929999999999], [5.383171, 1.528276], [5.38232, 1.618472], [5.38126, 1.7037289999999998], [5.380001, 1.781297], [5.378556, 1.8484239999999998], [5.376938, 1.902359], [5.375160999999999, 1.94035], [5.374669, 1.947333], [5.3670919999999995, 2.017749], [5.355531, 2.072898], [5.337791999999999, 2.120019], [5.311681999999999, 2.166353], [5.305415, 2.175933], [5.280983, 2.212622], [6.186311, 2.212622], [6.186507, 0.527755]]]}}, {"layer": "B", "drawing": {"type": "polygon", "pos": [133.0, 86.1], "angle": [180.0], "polygons": [[[2.673574, 1.133448], [2.8254919999999997, 1.113433], [2.960756, 1.079798], [3.0802389999999997, 1.032275], [3.184815, 0.970595], [3.2624239999999998, 0.9070349999999999], [3.3312649999999997, 0.832901], [3.3850059999999997, 0.7531289999999999], [3.42791, 0.660909], [3.443384, 0.617839], [3.456244, 0.578858], [3.467446, 0.5427109999999999], [3.4771199999999998, 0.507566], [3.4853959999999997, 0.47158999999999995], [3.492403, 0.43295], [3.498272, 0.38981499999999997], [3.5031309999999998, 0.34035099999999996], [3.50711, 0.282727], [3.51034, 0.215109], [3.512949, 0.13566599999999998], [3.5150669999999997, 0.042564], [3.5168239999999997, -0.066027], [3.5183489999999997, -0.191942], [3.5197719999999997, -0.337012], [3.521025, -0.479778], [3.522351, -0.635968], [3.5235559999999997, -0.771239], [3.5247659999999996, -0.887246], [3.526106, -0.985645], [3.5277, -1.068093], [3.5296749999999997, -1.1362459999999999], [3.5321559999999996, -1.19176], [3.535269, -1.236292], [3.539138, -1.271498], [3.5438889999999996, -1.299034], [3.549648, -1.3205559999999998], [3.556539, -1.3377219999999999], [3.564689, -1.3521859999999999], [3.574223, -1.3656059999999999], [3.585266, -1.379638], [3.589566, -1.385071], [3.6053859999999998, -1.40791], [3.612422, -1.423463], [3.612444, -1.423922], [3.6015669999999997, -1.426121], [3.570582, -1.4281469999999998], [3.521957, -1.4299419999999998], [3.458163, -1.431451], [3.381669, -1.432616], [3.2949439999999997, -1.4333799999999999], [3.2004569999999997, -1.433686], [3.1895499999999997, -1.433689], [2.766657, -1.433689], [2.763395, -1.3376219999999999], [2.7601329999999997, -1.2415559999999999], [2.698044, -1.292543], [2.600714, -1.3600569999999998], [2.4908129999999997, -1.414749], [2.404349, -1.4449779999999999], [2.3352779999999997, -1.459666], [2.251925, -1.4696589999999998], [2.162159, -1.474646], [2.073845, -1.474313], [1.994851, -1.468351], [1.9586219999999999, -1.4626379999999999], [1.818603, -1.424776], [1.692178, -1.369932], [1.58026, -1.298924], [1.483762, -1.2125679999999999], [1.4036, -1.1116789999999999], [1.340687, -0.997076], [1.296312, -0.870984], [1.2839779999999998, -0.8144009999999999], [1.276368, -0.7522019999999999], [1.2727389999999998, -0.6773629999999999], [1.2722449999999998, -0.643467], [1.27231, -0.640282], [2.032248, -0.640282], [2.041541, -0.715333], [2.069728, -0.77916], [2.118197, -0.8347979999999999], [2.1232539999999998, -0.8392109999999999], [2.171548, -0.874037], [2.223257, -0.89662], [2.283989, -0.90854], [2.359352, -0.9113829999999999], [2.377459, -0.910978], [2.431278, -0.9083249999999999], [2.471308, -0.902909], [2.5063239999999998, -0.892745], [2.5451029999999997, -0.8758499999999999], [2.555745, -0.870672], [2.616396, -0.8348439999999999], [2.6632149999999997, -0.7922119999999999], [2.6759519999999997, -0.7769729999999999], [2.720622, -0.7204619999999999], [2.720622, -0.524586], [2.720086, -0.445939], [2.718396, -0.387988], [2.7154279999999997, -0.348875], [2.711057, -0.326741], [2.706972, -0.320274], [2.6910469999999997, -0.317111], [2.657264, -0.314488], [2.61034, -0.31265499999999996], [2.554993, -0.311857], [2.546106, -0.311842], [2.4253299999999998, -0.317096], [2.32266, -0.333263], [2.236106, -0.360961], [2.163681, -0.400808], [2.108751, -0.447758], [2.0642039999999997, -0.505645], [2.0394799999999997, -0.568693], [2.032248, -0.640282], [1.27231, -0.640282], [1.274178, -0.549712], [1.282522, -0.47081199999999995], [1.298768, -0.39959], [1.3244049999999998, -0.328864], [1.348401, -0.276493], [1.40702, -0.181196], [1.485117, -0.09316999999999999], [1.580315, -0.014017], [1.690238, 0.05466], [1.8125099999999998, 0.111259], [1.944755, 0.15417899999999998], [2.009422, 0.169118], [2.145604, 0.191223], [2.294049, 0.205806], [2.445505, 0.212187], [2.5720639999999997, 0.210555], [2.7339499999999997, 0.20377599999999998], [2.72653, 0.26275499999999996], [2.707238, 0.361908], [2.676104, 0.44262799999999997], [2.632269, 0.5055339999999999], [2.574871, 0.551244], [2.5030479999999997, 0.580378], [2.4159409999999997, 0.593553], [2.312686, 0.5913889999999999], [2.274711, 0.587388], [2.13352, 0.5622199999999999], [1.996707, 0.5211859999999999], [1.902178, 0.483185], [1.8570179999999998, 0.46381], [1.818585, 0.44823999999999997], [1.7922339999999999, 0.43859499999999996], [1.784546, 0.436548], [1.774802, 0.44562599999999997], [1.7580829999999998, 0.474595], [1.734232, 0.523783], [1.703093, 0.5935159999999999], [1.664507, 0.684121], [1.65791, 0.699911], [1.627853, 0.7722279999999999], [1.600874, 0.837575], [1.578136, 0.8930939999999999], [1.560806, 0.935928], [1.5500479999999999, 0.9632189999999999], [1.546941, 0.972058], [1.55694, 0.9768129999999999], [1.5832169999999999, 0.9820899999999999], [1.611489, 0.985769], [1.641646, 0.9905259999999999], [1.689433, 0.999972], [1.7506119999999998, 1.01318], [1.820946, 1.029224], [1.896194, 1.04718], [1.924755, 1.054203], [2.029816, 1.079791], [2.11748, 1.099853], [2.192068, 1.1150309999999999], [2.2579029999999998, 1.1259649999999999], [2.319307, 1.1332959999999999], [2.380602, 1.137665], [2.44611, 1.139713], [2.5041279999999997, 1.1401109999999999], [2.673574, 1.133448]]]}}, {"layer": "B", "drawing": {"type": "polygon", "pos": [133.0, 86.1], "angle": [180.0], "polygons": [[[0.32842899999999997, 2.050929], [0.48857, 2.0297549999999998], [0.6525099999999999, 1.989615], [0.822313, 1.930111], [1.000043, 1.850846], [1.01131, 1.8453009999999999], [1.069005, 1.817275], [1.120552, 1.7931979999999998], [1.162191, 1.774751], [1.190162, 1.763614], [1.199733, 1.761067], [1.21895, 1.7560589999999998], [1.223561, 1.7518529999999999], [1.218458, 1.74142], [1.202418, 1.7151319999999999], [1.177288, 1.675743], [1.144914, 1.6260089999999998], [1.107143, 1.5686849999999999], [1.065822, 1.506524], [1.0227979999999999, 1.4422819999999998], [0.9799169999999999, 1.378715], [0.9390259999999999, 1.3185749999999998], [0.901971, 1.2646199999999999], [0.8705999999999999, 1.219603], [0.8467589999999999, 1.1862789999999999], [0.832294, 1.167403], [0.830309, 1.165213], [0.820191, 1.169862], [0.79785, 1.187038], [0.76728, 1.21356], [0.751536, 1.228036], [0.6550469999999999, 1.303318], [0.5483359999999999, 1.3587589999999998], [0.432832, 1.393859], [0.30996199999999996, 1.40812], [0.240561, 1.406949], [0.119423, 1.389788], [0.010204999999999999, 1.3539059999999998], [-0.087418, 1.299041], [-0.17377199999999998, 1.2249299999999999], [-0.249185, 1.1313119999999999], [-0.313982, 1.017924], [-0.35139899999999996, 0.931333], [-0.395252, 0.795634], [-0.427572, 0.64815], [-0.448443, 0.49268599999999996], [-0.457949, 0.333044], [-0.456173, 0.173027], [-0.443197, 0.016439], [-0.419106, -0.13291799999999998], [-0.383982, -0.27124], [-0.337908, -0.39472399999999996], [-0.321627, -0.42897799999999997], [-0.25338, -0.543064], [-0.172921, -0.6395569999999999], [-0.08143, -0.7176699999999999], [0.019910999999999998, -0.776617], [0.12992, -0.815612], [0.247415, -0.8338679999999999], [0.288883, -0.8352109999999999], [0.410441, -0.82429], [0.530878, -0.791474], [0.648666, -0.737439], [0.762277, -0.6628649999999999], [0.8536849999999999, -0.5845389999999999], [0.900215, -0.5400079999999999], [1.081483, -0.837271], [1.12658, -0.9114329999999999], [1.167819, -0.9796459999999999], [1.203735, -1.039459], [1.232866, -1.08842], [1.25375, -1.124079], [1.264924, -1.143984], [1.266375, -1.147079], [1.258146, -1.156718], [1.232567, -1.173999], [1.1928729999999999, -1.1972829999999999], [1.142297, -1.224934], [1.084074, -1.255315], [1.021437, -1.2867899999999999], [0.9576209999999999, -1.3177219999999998], [0.89586, -1.346473], [0.8393879999999999, -1.371408], [0.791438, -1.390889], [0.767986, -1.3993179999999998], [0.6342209999999999, -1.437133], [0.49632699999999996, -1.4621359999999999], [0.348622, -1.47514], [0.221833, -1.477468], [0.153878, -1.476373], [0.088277, -1.474275], [0.030847, -1.471434], [-0.012596999999999999, -1.468106], [-0.026702, -1.466422], [-0.165716, -1.437587], [-0.307243, -1.392468], [-0.444725, -1.33375], [-0.571606, -1.26412], [-0.649111, -1.211441], [-0.776519, -1.1032389999999999], [-0.894822, -0.976671], [-1.001828, -0.834866], [-1.095348, -0.680951], [-1.17319, -0.518053], [-1.217044, -0.400756], [-1.2672919999999999, -0.217128], [-1.300791, -0.022581], [-1.317551, 0.178675], [-1.3175839999999999, 0.382432], [-1.300899, 0.584479], [-1.267507, 0.780608], [-1.21742, 0.9666089999999999], [-1.213603, 0.978197], [-1.150719, 1.14025], [-1.073972, 1.288168], [-0.9807579999999999, 1.426135], [-0.8684729999999999, 1.558339], [-0.824608, 1.6036009999999998], [-0.688466, 1.7275429999999998], [-0.548509, 1.830085], [-0.402589, 1.9123439999999998], [-0.248558, 1.975436], [-0.084268, 2.020477], [0.011288999999999999, 2.037967], [0.17002299999999998, 2.053534], [0.32842899999999997, 2.050929]]]}}, {"layer": "B", "drawing": {"type": "polygon", "pos": [133.0, 86.1], "angle": [180.0], "polygons": [[[-2.9463999999999997, 2.5109459999999997], [-2.935535, 2.397007], [-2.903918, 2.289384], [-2.853015, 2.190385], [-2.784293, 2.102316], [-2.699219, 2.027484], [-2.602232, 1.9696159999999998], [-2.495964, 1.929995], [-2.38895, 1.911427], [-2.2833, 1.912566], [-2.1811249999999998, 1.93207], [-2.084534, 1.968594], [-1.9956379999999998, 2.020795], [-1.9165459999999999, 2.0873269999999997], [-1.8493689999999998, 2.166848], [-1.796217, 2.258013], [-1.759199, 2.359477], [-1.740427, 2.4698979999999997], [-1.738489, 2.519794], [-1.738489, 2.607733], [-1.6865599999999998, 2.607733], [-1.650253, 2.604889], [-1.6233549999999999, 2.593089], [-1.596249, 2.5693509999999997], [-1.557867, 2.530969], [-1.557867, 0.339398], [-1.557876, 0.077261], [-1.5579079999999998, -0.163241], [-1.557972, -0.383048], [-1.558076, -0.583101], [-1.558227, -0.7643439999999999], [-1.5584339999999999, -0.927716], [-1.558706, -1.07416], [-1.5590499999999998, -1.204617], [-1.559474, -1.320029], [-1.559987, -1.421338], [-1.560597, -1.5094839999999998], [-1.561312, -1.58541], [-1.5621399999999999, -1.6500569999999999], [-1.563089, -1.704367], [-1.5641669999999999, -1.74928], [-1.565383, -1.7857399999999999], [-1.5667449999999998, -1.814687], [-1.568261, -1.837063], [-1.5699379999999998, -1.8538089999999998], [-1.571786, -1.8658679999999999], [-1.573813, -1.87418], [-1.576025, -1.8796869999999999], [-1.577108, -1.881537], [-1.5812709999999999, -1.8885489999999998], [-1.584805, -1.894996], [-1.588635, -1.9008999999999998], [-1.5936819999999998, -1.906286], [-1.600871, -1.9111779999999998], [-1.6111229999999999, -1.915598], [-1.625364, -1.9195719999999998], [-1.644514, -1.9231209999999999], [-1.6694989999999998, -1.92627], [-1.7012399999999999, -1.929042], [-1.740662, -1.9314609999999999], [-1.788686, -1.933551], [-1.846237, -1.9353349999999998], [-1.914237, -1.936837], [-1.9936099999999999, -1.9380799999999998], [-2.085279, -1.9390889999999998], [-2.190166, -1.9398849999999999], [-2.309196, -1.940494], [-2.4432899999999997, -1.940939], [-2.5933729999999997, -1.9412429999999998], [-2.760367, -1.94143], [-2.9451959999999997, -1.9415239999999998], [-3.148783, -1.9415479999999998], [-3.3720499999999998, -1.941525], [-3.615922, -1.9414799999999999], [-3.881321, -1.9414369999999999], [-3.919704, -1.9414319999999998], [-4.186682, -1.9413889999999998], [-4.432002, -1.9413179999999999], [-4.6565829999999995, -1.9412129999999999], [-4.861345, -1.941066], [-5.047206, -1.940869], [-5.215088, -1.940616], [-5.365908, -1.9403], [-5.5005869999999994, -1.939913], [-5.620044, -1.939447], [-5.725199, -1.9388969999999999], [-5.816971, -1.938253], [-5.896279, -1.937511], [-5.964042999999999, -1.936661], [-6.021182, -1.935697], [-6.068617, -1.9346109999999999], [-6.107266, -1.9333969999999998], [-6.138049, -1.9320469999999998], [-6.161885, -1.930555], [-6.179694, -1.9289109999999998], [-6.192394999999999, -1.927111], [-6.200908, -1.9251449999999999], [-6.205266, -1.9234769999999999], [-6.213728, -1.919906], [-6.221496999999999, -1.9172699999999998], [-6.2286019999999995, -1.914634], [-6.235073, -1.9110619999999998], [-6.240939, -1.905621], [-6.246229, -1.8973749999999998], [-6.250973999999999, -1.88539], [-6.255202, -1.868731], [-6.2589429999999995, -1.846463], [-6.262226999999999, -1.8176519999999998], [-6.265083, -1.781363], [-6.2675399999999994, -1.736661], [-6.269629, -1.6826109999999999], [-6.2713779999999995, -1.618279], [-6.272817, -1.54273], [-6.273975999999999, -1.4550299999999998], [-6.274883, -1.3542429999999999], [-6.275569, -1.239434], [-6.276063, -1.10967], [-6.276395, -0.964015], [-6.276593, -0.801535], [-6.276687, -0.6212949999999999], [-6.276707999999999, -0.42235999999999996], [-6.276685, -0.20379599999999998], [-6.2766459999999995, 0.035331999999999995], [-6.276622, 0.29596], [-6.276622, 0.338111], [-6.276636, 0.601008], [-6.276661, 0.842268], [-6.2766709999999994, 1.062835], [-6.276642, 1.2636479999999999], [-6.276548, 1.445651], [-6.276362, 1.6097839999999999], [-6.276059, 1.756989], [-6.275614, 1.8882079999999999], [-6.275034, 1.998133], [-5.9721969999999995, 1.998133], [-5.9324069999999995, 1.940289], [-5.9212359999999995, 1.924521], [-5.911166, 1.910559], [-5.902138, 1.897216], [-5.8940969999999995, 1.8833069999999998], [-5.886985999999999, 1.8676439999999999], [-5.8807469999999995, 1.8490419999999999], [-5.875325, 1.826314], [-5.870661999999999, 1.798273], [-5.866701, 1.763733], [-5.863385, 1.7215079999999998], [-5.860659, 1.6704109999999999], [-5.858464, 1.609256], [-5.856745, 1.536856], [-5.855443999999999, 1.452025], [-5.854505, 1.353578], [-5.85387, 1.240326], [-5.853484, 1.111084], [-5.853288, 0.9646659999999999], [-5.8532269999999995, 0.7998839999999999], [-5.853243, 0.615553], [-5.85328, 0.410487], [-5.853288999999999, 0.287867], [-5.8532649999999995, 0.070918], [-5.853231, -0.12464199999999999], [-5.853243, -0.29999899999999996], [-5.853358, -0.456341], [-5.85363, -0.594857], [-5.854118, -0.716734], [-5.854876, -0.82316], [-5.855962, -0.915322], [-5.857431, -0.994409], [-5.8593399999999995, -1.0616079999999999], [-5.861744, -1.118107], [-5.864701, -1.165093], [-5.868265999999999, -1.203755], [-5.872495, -1.23528], [-5.877446, -1.2608549999999998], [-5.883172999999999, -1.2816699999999999], [-5.889733, -1.298911], [-5.897183, -1.3137649999999998], [-5.9055789999999995, -1.3274219999999999], [-5.914975999999999, -1.3410689999999998], [-5.925432, -1.355893], [-5.931522999999999, -1.3647829999999999], [-5.970295999999999, -1.4223999999999999], [-5.438732, -1.4223999999999999], [-5.3154829999999995, -1.4223649999999999], [-5.212987, -1.422215], [-5.12942, -1.421878], [-5.062956, -1.4212859999999998], [-5.0117709999999995, -1.420367], [-4.974041, -1.4190509999999998], [-4.94794, -1.417269], [-4.9316439999999995, -1.4149509999999998], [-4.923328, -1.412026], [-4.921168, -1.408424], [-4.9233389999999995, -1.404075], [-4.924535, -1.402645], [-4.949685, -1.365573], [-4.975582999999999, -1.312772], [-4.999192, -1.25077], [-5.007461, -1.224357], [-5.012078, -1.206416], [-5.015979, -1.185355], [-5.019248, -1.159089], [-5.021966, -1.125532], [-5.024215, -1.0825989999999999], [-5.026077, -1.028204], [-5.027636, -0.960262], [-5.0289719999999996, -0.8766879999999999], [-5.030169, -0.775395], [-5.031308, -0.6543], [-5.0316849999999995, -0.6095999999999999], [-5.032702, -0.48444899999999996], [-5.03346, -0.380082], [-5.033903, -0.294707], [-5.03397, -0.22653299999999998], [-5.033605, -0.173765], [-5.032748, -0.13461399999999998], [-5.031340999999999, -0.10728499999999999], [-5.029325, -0.089986], [-5.026643, -0.080926], [-5.023236, -0.07831199999999999], [-5.019044, -0.08035099999999999], [-5.014571, -0.08466699999999999], [-5.0042159999999996, -0.097602], [-4.982158, -0.12667599999999998], [-4.9499569999999995, -0.169759], [-4.909174, -0.224718], [-4.86137, -0.289423], [-4.808104999999999, -0.361742], [-4.75094, -0.439544], [-4.691437, -0.520698], [-4.631155, -0.6030719999999999], [-4.571655, -0.6845359999999999], [-4.514498, -0.762957], [-4.461245, -0.836204], [-4.413457, -0.9021469999999999], [-4.372693, -0.958654], [-4.340516, -1.003593], [-4.318485, -1.034834], [-4.313917, -1.041466], [-4.290996, -1.078369], [-4.264188, -1.1263589999999999], [-4.238789, -1.175897], [-4.235568, -1.182577], [-4.21389, -1.230772], [-4.2013039999999995, -1.2683339999999999], [-4.195574, -1.30416], [-4.194456, -1.3461999999999998], [-4.1950899999999995, -1.4223999999999999], [-3.040651, -1.4223999999999999], [-3.131815, -1.3286689999999999], [-3.1786119999999998, -1.278775], [-3.2288989999999997, -1.222295], [-3.2749439999999996, -1.168026], [-3.295369, -1.142673], [-3.3258069999999997, -1.1031279999999999], [-3.365862, -1.0499159999999998], [-3.414361, -0.984667], [-3.470135, -0.909011], [-3.532011, -0.824577], [-3.5988189999999998, -0.7329939999999999], [-3.669387, -0.635892], [-3.742545, -0.534901], [-3.8171209999999998, -0.43165], [-3.8919439999999996, -0.327768], [-3.965843, -0.224885], [-4.037646, -0.12463099999999999], [-4.106184, -0.028635999999999998], [-4.170284, 0.061473], [-4.228775, 0.144064], [-4.280486, 0.21750799999999998], [-4.324247, 0.280176], [-4.358885, 0.330439], [-4.38323, 0.366666], [-4.396110999999999, 0.387229], [-4.397869, 0.39133199999999996], [-4.3899099999999995, 0.40265799999999996], [-4.369115, 0.429838], [-4.336847, 0.47117099999999995], [-4.29447, 0.524956], [-4.243347, 0.589494], [-4.184841, 0.663082], [-4.120314, 0.744022], [-4.051131, 0.830612], [-3.978653, 0.921152], [-3.9042459999999997, 1.01394], [-3.8445169999999997, 1.088298], [-2.8335109999999997, 1.088298], [-2.8276019999999997, 1.0753409999999999], [-2.813272, 1.053092], [-2.8122249999999998, 1.051609], [-2.793438, 1.021456], [-2.7737909999999997, 0.984625], [-2.769892, 0.9764889999999999], [-2.766356, 0.9680599999999999], [-2.76323, 0.9579409999999999], [-2.7604859999999998, 0.9447399999999999], [-2.758092, 0.9270619999999999], [-2.7560189999999998, 0.903516], [-2.754235, 0.872707], [-2.752712, 0.833243], [-2.751419, 0.783731], [-2.750326, 0.722777], [-2.749403, 0.6489889999999999], [-2.7486189999999997, 0.560972], [-2.747945, 0.457335], [-2.74735, 0.336684], [-2.7468049999999997, 0.197626], [-2.746279, 0.038768], [-2.745745, -0.140089], [-2.745206, -0.32520699999999997], [-2.7447719999999998, -0.489145], [-2.744509, -0.633303], [-2.744484, -0.759079], [-2.7447649999999997, -0.867871], [-2.745419, -0.961077], [-2.746514, -1.040097], [-2.748118, -1.106328], [-2.7502969999999998, -1.16117], [-2.753119, -1.206021], [-2.7566509999999997, -1.242278], [-2.760961, -1.2713409999999998], [-2.766117, -1.294609], [-2.772185, -1.3134789999999998], [-2.779233, -1.329351], [-2.7873289999999997, -1.3436219999999999], [-2.79654, -1.357691], [-2.80504, -1.370158], [-2.822176, -1.396452], [-2.832322, -1.414037], [-2.8335109999999997, -1.417257], [-2.8226039999999997, -1.418334], [-2.791411, -1.419335], [-2.742223, -1.420235], [-2.677333, -1.4210099999999999], [-2.59903, -1.421637], [-2.509607, -1.422091], [-2.411356, -1.4223489999999999], [-2.342445, -1.4223999999999999], [-2.2374519999999998, -1.42218], [-2.14061, -1.421548], [-2.054107, -1.4205489999999998], [-1.980132, -1.419227], [-1.920874, -1.4176259999999998], [-1.87852, -1.415791], [-1.85526, -1.413765], [-1.851378, -1.412493], [-1.859076, -1.397591], [-1.867074, -1.38956], [-1.8802459999999999, -1.372434], [-1.8974849999999999, -1.342183], [-1.9094069999999999, -1.3176219999999998], [-1.936045, -1.258711], [-1.93912, -0.081845], [-1.942195, 1.095022], [-2.387853, 1.095022], [-2.48567, 1.0948579999999999], [-2.5760639999999997, 1.094389], [-2.65663, 1.093653], [-2.7249619999999997, 1.092684], [-2.778656, 1.09152], [-2.815305, 1.0901969999999999], [-2.8325039999999997, 1.088751], [-2.8335109999999997, 1.088298], [-3.8445169999999997, 1.088298], [-3.8292699999999997, 1.107278], [-3.75509, 1.199463], [-3.6830689999999997, 1.288796], [-3.614569, 1.373576], [-3.5509549999999996, 1.452102], [-3.493588, 1.5226739999999999], [-3.4438329999999997, 1.583591], [-3.4030519999999997, 1.6331529999999999], [-3.385888, 1.653822], [-3.2995959999999998, 1.754484], [-3.222997, 1.8377409999999998], [-3.1541829999999997, 1.905562], [-3.0912479999999998, 1.959911], [-3.081867, 1.9672779999999999], [-3.042356, 1.9978829999999999], [-4.174116, 1.998133], [-4.168826999999999, 1.950156], [-4.17213, 1.892812], [-4.193661, 1.8245369999999999], [-4.233635, 1.744788], [-4.278943, 1.672505], [-4.295161, 1.6498599999999999], [-4.323214, 1.612304], [-4.3614299999999995, 1.561979], [-4.408137, 1.501027], [-4.461660999999999, 1.431589], [-4.520331, 1.3558059999999998], [-4.582475, 1.27582], [-4.646421, 1.193772], [-4.710495, 1.111804], [-4.773027, 1.032057], [-4.832343, 0.956673], [-4.8867709999999995, 0.8877929999999999], [-4.934639, 0.827558], [-4.974275, 0.778111], [-5.0040059999999995, 0.7415919999999999], [-5.022161, 0.720142], [-5.02522, 0.7168439999999999], [-5.028079, 0.7248509999999999], [-5.0302929999999995, 0.755145], [-5.031857, 0.8074439999999999], [-5.032767, 0.881469], [-5.03302, 0.9769369999999999], [-5.032613, 1.093566], [-5.0317039999999995, 1.213555], [-5.0303819999999995, 1.345667], [-5.0288569999999995, 1.457406], [-5.0268809999999995, 1.550975], [-5.0242059999999995, 1.6285809999999998], [-5.020582, 1.692426], [-5.0157609999999995, 1.7447169999999999], [-5.009494, 1.787656], [-5.001532, 1.8234489999999999], [-4.991626999999999, 1.8542999999999998], [-4.979531, 1.8824139999999998], [-4.964993, 1.9099949999999999], [-4.950311, 1.935034], [-4.912313999999999, 1.998133], [-5.9721969999999995, 1.998133], [-6.275034, 1.998133], [-6.275001, 2.004383], [-6.274195, 2.106456], [-6.2731699999999995, 2.195367], [-6.2719, 2.272059], [-6.27036, 2.3374729999999997], [-6.268523999999999, 2.392551], [-6.266367, 2.4382349999999997], [-6.263863, 2.475466], [-6.260987, 2.505187], [-6.257713, 2.5283379999999998], [-6.254015, 2.545861], [-6.2498689999999995, 2.558699], [-6.245247, 2.567792], [-6.240126, 2.5740819999999998], [-6.234477999999999, 2.578512], [-6.228279, 2.582022], [-6.2215039999999995, 2.585555], [-6.215508, 2.589124], [-6.210274999999999, 2.5917], [-6.202099, 2.594028], [-6.1898859999999996, 2.596122], [-6.172541, 2.5979929999999998], [-6.148969, 2.599653], [-6.1180769999999995, 2.6011159999999998], [-6.078767999999999, 2.602392], [-6.0299499999999995, 2.603496], [-5.970527, 2.6044389999999997], [-5.899404, 2.6052329999999997], [-5.815487999999999, 2.6058909999999997], [-5.717683, 2.6064249999999998], [-5.604894, 2.6068469999999997], [-5.476029, 2.6071709999999997], [-5.329991, 2.607408], [-5.165686, 2.60757], [-4.9820199999999994, 2.6076699999999997], [-4.777896999999999, 2.60772], [-4.566752999999999, 2.607733], [-2.9463999999999997, 2.607733], [-2.9463999999999997, 2.5109459999999997]]]}}], "layer": "B"}, {"ref": "REF**", "center": [133.0, 86.1], "bbox": {"pos": [126.57499899999999, 83.07499899999999], "size": [12.850002, 5.050002]}, "pads": [], "drawings": [], "layer": "B"}, {"ref": "H2", "center": [170.5, 82.0], "bbox": {"pos": [168.02499899999998, 79.524999], "size": [4.950002, 4.950002]}, "pads": [{"layers": ["F", "B"], "pos": [170.5, 82.0], "size": [2.1999999999999997, 2.1999999999999997], "angle": -0.0, "shape": "circle", "pin1": 1, "type": "th", "drillshape": "circle", "drillsize": [2.1999999999999997, 2.1999999999999997], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "H1", "center": [108.0, 97.0], "bbox": {"pos": [105.524999, 94.524999], "size": [4.950002, 4.950002]}, "pads": [{"layers": ["F", "B"], "pos": [108.0, 97.0], "size": [2.1999999999999997, 2.1999999999999997], "angle": -0.0, "shape": "circle", "pin1": 1, "type": "th", "drillshape": "circle", "drillsize": [2.1999999999999997, 2.1999999999999997], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "U3", "center": [148.57399999999998, 89.68599999999999], "bbox": {"pos": [144.818999, 86.960999], "size": [7.510002, 5.450002]}, "pads": [{"layers": ["F"], "pos": [145.874, 91.591], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [145.874, 90.321], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [145.874, 89.051], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [145.874, 87.78099999999999], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [151.274, 87.78099999999999], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [151.274, 89.051], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [151.274, 90.321], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [151.274, 91.591], "size": [1.5499999999999998, 0.6], "angle": -180.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "U1", "center": [132.686, 89.90599999999999], "bbox": {"pos": [128.93099899999999, 87.180999], "size": [7.510002, 5.450002]}, "pads": [{"layers": ["F"], "pos": [135.386, 88.00099999999999], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [135.386, 89.271], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [135.386, 90.541], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [135.386, 91.81099999999999], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [129.986, 91.81099999999999], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [129.986, 90.541], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [129.986, 89.271], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [129.986, 88.00099999999999], "size": [1.5499999999999998, 0.6], "angle": -0.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "Q2", "center": [164.0, 88.5], "bbox": {"pos": [160.474999, 82.924999], "size": [7.050002, 11.150001999999999]}, "pads": [{"layers": [], "pos": [165.525, 88.075], "size": [3.05, 2.75], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": [], "pos": [162.475, 84.725], "size": [3.05, 2.75], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": [], "pos": [162.475, 88.075], "size": [3.05, 2.75], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": [], "pos": [165.525, 84.725], "size": [3.05, 2.75], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [164.0, 86.39999999999999], "size": [6.3999999999999995, 5.8], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [166.28, 92.7], "size": [2.1999999999999997, 1.2], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [164.0, 92.7], "size": [2.1999999999999997, 1.2], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [161.72, 92.7], "size": [2.1999999999999997, 1.2], "angle": -90.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "Q1", "center": [158.5, 91.5], "bbox": {"pos": [156.724999, 89.774999], "size": [3.5500019999999997, 3.450002]}, "pads": [{"layers": ["F"], "pos": [158.5, 92.5], "size": [0.8999999999999999, 0.7999999999999999], "angle": -270.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [157.54999999999998, 90.5], "size": [0.8999999999999999, 0.7999999999999999], "angle": -270.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [159.45, 90.5], "size": [0.8999999999999999, 0.7999999999999999], "angle": -270.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "J2", "center": [174.1, 81.39999999999999], "bbox": {"pos": [172.30499899999998, 77.954999], "size": [8.670002, 6.850002]}, "pads": [{"layers": ["F", "B"], "pos": [179.17999999999998, 81.39999999999999], "size": [1.74, 2.1999999999999997], "angle": -0.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.2, 1.2], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [176.64, 81.39999999999999], "size": [1.74, 2.1999999999999997], "angle": -0.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.2, 1.2], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [174.1, 81.39999999999999], "size": [1.74, 2.1999999999999997], "angle": -0.0, "shape": "roundrect", "pin1": 1, "radius": 0.249999, "type": "th", "drillshape": "circle", "drillsize": [1.2, 1.2], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "J1", "center": [176.2, 97.5], "bbox": {"pos": [171.86499899999998, 94.094999], "size": [6.130001999999999, 6.850002]}, "pads": [{"layers": ["F", "B"], "pos": [173.66, 97.5], "size": [1.74, 2.1999999999999997], "angle": -180.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.2, 1.2], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [176.2, 97.5], "size": [1.74, 2.1999999999999997], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.249999, "type": "th", "drillshape": "circle", "drillsize": [1.2, 1.2], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R13", "center": [143.1, 88.0], "bbox": {"pos": [141.39499899999998, 87.024999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [144.0375, 88.0], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [142.1625, 88.0], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R9", "center": [140.4, 92.39999999999999], "bbox": {"pos": [139.42499899999999, 90.694999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [140.4, 91.46249999999999], "size": [0.975, 1.4], "angle": -90.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [140.4, 93.33749999999999], "size": [0.975, 1.4], "angle": -90.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "D1", "center": [117.19999999999999, 94.6], "bbox": {"pos": [114.524999, 93.474999], "size": [5.350002, 2.250002]}, "pads": [{"layers": ["F"], "pos": [115.44999999999999, 94.6], "size": [1.3, 1.7], "angle": -180.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [118.94999999999999, 94.6], "size": [1.3, 1.7], "angle": -180.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R8", "center": [158.5, 88.5], "bbox": {"pos": [156.794999, 87.524999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [159.4375, 88.5], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [157.5625, 88.5], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R12", "center": [152.04, 79.45], "bbox": {"pos": [150.33499899999998, 78.474999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [151.1025, 79.45], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [152.9775, 79.45], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R11", "center": [148.53, 79.47], "bbox": {"pos": [146.824999, 78.49499899999999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [147.5925, 79.47], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [149.4675, 79.47], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R10", "center": [148.75, 93.41], "bbox": {"pos": [147.044999, 92.43499899999999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [147.8125, 93.41], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [149.6875, 93.41], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R7", "center": [128.7, 79.39999999999999], "bbox": {"pos": [126.99499899999999, 78.424999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [127.76249999999999, 79.39999999999999], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [129.6375, 79.39999999999999], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R6", "center": [132.1, 79.39999999999999], "bbox": {"pos": [130.39499899999998, 78.424999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [133.0375, 79.39999999999999], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [131.1625, 79.39999999999999], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R5", "center": [168.75, 92.0], "bbox": {"pos": [167.77499899999998, 90.29499899999999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [168.75, 92.9375], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [168.75, 91.0625], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R4", "center": [153.6, 84.0], "bbox": {"pos": [151.89499899999998, 83.024999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [154.5375, 84.0], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [152.6625, 84.0], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R3", "center": [158.5, 86.5], "bbox": {"pos": [156.794999, 85.524999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [159.4375, 86.5], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [157.5625, 86.5], "size": [0.975, 1.4], "angle": -0.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R2", "center": [154.1, 90.7], "bbox": {"pos": [152.39499899999998, 89.724999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [153.1625, 90.7], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [155.0375, 90.7], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "R1", "center": [154.1, 88.8], "bbox": {"pos": [152.39499899999998, 87.82499899999999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [153.1625, 88.8], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [155.0375, 88.8], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "J3", "center": [114.89999999999999, 80.1], "bbox": {"pos": [105.474999, 78.274999], "size": [11.250002, 3.6500019999999997]}, "pads": [{"layers": ["F", "B"], "pos": [107.28, 80.1], "size": [1.7, 1.7], "angle": -270.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [109.82, 80.1], "size": [1.7, 1.7], "angle": -270.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [112.36, 80.1], "size": [1.7, 1.7], "angle": -270.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [114.89999999999999, 80.1], "size": [1.7, 1.7], "angle": -270.0, "shape": "rect", "pin1": 1, "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C12", "center": [148.6, 84.0], "bbox": {"pos": [146.89499899999998, 83.024999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [147.6625, 84.0], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [149.5375, 84.0], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C9", "center": [143.67, 91.3], "bbox": {"pos": [142.694999, 89.594999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [143.67, 92.2375], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [143.67, 90.3625], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C8", "center": [141.0, 85.0], "bbox": {"pos": [140.02499899999998, 83.29499899999999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [141.0, 85.9375], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [141.0, 84.0625], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C6", "center": [137.5, 87.5], "bbox": {"pos": [136.52499899999998, 85.79499899999999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [137.5, 88.4375], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [137.5, 86.5625], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C5", "center": [137.5, 91.0], "bbox": {"pos": [136.52499899999998, 89.29499899999999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [137.5, 90.0625], "size": [0.975, 1.4], "angle": -90.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [137.5, 91.9375], "size": [0.975, 1.4], "angle": -90.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C4", "center": [112.0, 94.69999999999999], "bbox": {"pos": [110.29499899999999, 93.724999], "size": [3.410002, 1.950002]}, "pads": [{"layers": ["F"], "pos": [111.0625, 94.69999999999999], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [112.9375, 94.69999999999999], "size": [0.975, 1.4], "angle": -180.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C3", "center": [127.6, 90.89999999999999], "bbox": {"pos": [126.62499899999999, 89.194999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [127.6, 91.83749999999999], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [127.6, 89.96249999999999], "size": [0.975, 1.4], "angle": -270.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "C2", "center": [106.5, 91.1], "bbox": {"pos": [105.524999, 89.394999], "size": [1.950002, 3.410002]}, "pads": [{"layers": ["F"], "pos": [106.5, 90.1625], "size": [0.975, 1.4], "angle": -90.0, "shape": "roundrect", "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [106.5, 92.0375], "size": [0.975, 1.4], "angle": -90.0, "shape": "roundrect", "pin1": 1, "radius": 0.24375, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "RV2", "center": [109.0, 84.1], "bbox": {"pos": [107.174999, 82.274999], "size": [8.700002, 3.6500019999999997]}, "pads": [{"layers": ["F", "B"], "pos": [114.08, 84.1], "size": [1.7, 1.7], "angle": -90.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [111.53999999999999, 84.1], "size": [1.7, 1.7], "angle": -90.0, "shape": "oval", "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}, {"layers": ["F", "B"], "pos": [109.0, 84.1], "size": [1.7, 1.7], "angle": -90.0, "shape": "rect", "pin1": 1, "type": "th", "drillshape": "circle", "drillsize": [1.0, 1.0], "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "U5", "center": [111.89999999999999, 89.7], "bbox": {"pos": [107.474999, 86.07499899999999], "size": [8.850002, 7.250001999999999]}, "pads": [{"layers": ["F"], "pos": [108.75, 87.39999999999999], "size": [2.0, 1.5], "angle": -0.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [108.75, 92.0], "size": [2.0, 1.5], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [108.75, 89.7], "size": [2.0, 1.5], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [115.05, 89.7], "size": [2.0, 3.8], "angle": -0.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "U2", "center": [144.1, 85.0], "bbox": {"pos": [142.27499899999998, 83.07499899999999], "size": [3.6500019999999997, 3.850002]}, "pads": [{"layers": ["F"], "pos": [143.15, 83.89999999999999], "size": [1.06, 0.65], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [145.04999999999998, 83.89999999999999], "size": [1.06, 0.65], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [145.04999999999998, 86.1], "size": [1.06, 0.65], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [144.1, 86.1], "size": [1.06, 0.65], "angle": -90.0, "shape": "rect", "type": "smd", "offset": [0.0, 0.0]}, {"layers": ["F"], "pos": [143.15, 86.1], "size": [1.06, 0.65], "angle": -90.0, "shape": "rect", "pin1": 1, "type": "smd", "offset": [0.0, 0.0]}], "drawings": [], "layer": "F"}, {"ref": "G***", "center": [118.5, 90.89999999999999], "bbox": {"pos": [116.47108999999999, 87.87582499999999], "size": [4.1032329999999995, 5.7543619999999995]}, "pads": [], "drawings": [], "layer": "B"}], "metadata": {"title": "soldering_station", "revision": "", "company": "", "date": "2019-04-07 19:08:08"}, "bom": {"both": [[4, "10uF", "C_0805_2012Metric", [["C2", 33], ["C3", 32], ["C4", 31], ["C5", 30]], []], [4, "100n", "C_0805_2012Metric", [["C6", 29], ["C8", 28], ["C9", 27], ["C12", 26]], []], [4, "4.7k", "R_0805_2012Metric", [["R1", 24], ["R2", 23], ["R6", 19], ["R7", 18]], []], [2, "1k", "R_0805_2012Metric", [["R4", 21], ["R5", 20]], []], [2, "100k", "R_0805_2012Metric", [["R9", 12], ["R13", 11]], []], [1, "50R", "R_0805_2012Metric", [["R3", 22]], []], [1, "10k", "R_0805_2012Metric", [["R8", 14]], []], [1, "100R", "R_0805_2012Metric", [["R10", 17]], []], [1, "13k", "R_0805_2012Metric", [["R11", 16]], []], [1, "1.6k", "R_0805_2012Metric", [["R12", 15]], []], [1, "D_Schottky", "D_MiniMELF", [["D1", 13]], []], [1, "BluePill", "BLUEPILL", [["U4", 0]], []], [1, "ICL7660", "SOIC-8_3.9x4.9mm_P1.27mm", [["U1", 6]], []], [1, "AD620", "SOIC-8_3.9x4.9mm_P1.27mm", [["U3", 5]], []], [1, "AP1117-50", "SOT-223-3_TabPin2", [["U5", 35]], []], [1, "LM321", "SOT-23-5", [["U2", 36]], []], [1, "POT", "PinHeader_1x03_P2.54mm_Vertical", [["RV2", 34]], []], [1, "BSS138", "SOT-23", [["Q1", 8]], []], [1, "IRFR9024N", "TO-252-3_TabPin2", [["Q2", 7]], []], [1, "Power_Supply", "Molex_KK-254_AE-6410-02A_1x02_P2.54mm_Vertical", [["J1", 10]], []], [1, "JBC_handle", "Molex_KK-254_AE-6410-03A_1x03_P2.54mm_Vertical", [["J2", 9]], []], [1, "OLED", "PinHeader_1x04_P2.54mm_Vertical", [["J3", 25]], []]], "F": [[4, "10uF", "C_0805_2012Metric", [["C2", 33], ["C3", 32], ["C4", 31], ["C5", 30]], []], [4, "100n", "C_0805_2012Metric", [["C6", 29], ["C8", 28], ["C9", 27], ["C12", 26]], []], [4, "4.7k", "R_0805_2012Metric", [["R1", 24], ["R2", 23], ["R6", 19], ["R7", 18]], []], [2, "1k", "R_0805_2012Metric", [["R4", 21], ["R5", 20]], []], [2, "100k", "R_0805_2012Metric", [["R9", 12], ["R13", 11]], []], [1, "50R", "R_0805_2012Metric", [["R3", 22]], []], [1, "10k", "R_0805_2012Metric", [["R8", 14]], []], [1, "100R", "R_0805_2012Metric", [["R10", 17]], []], [1, "13k", "R_0805_2012Metric", [["R11", 16]], []], [1, "1.6k", "R_0805_2012Metric", [["R12", 15]], []], [1, "D_Schottky", "D_MiniMELF", [["D1", 13]], []], [1, "BluePill", "BLUEPILL", [["U4", 0]], []], [1, "ICL7660", "SOIC-8_3.9x4.9mm_P1.27mm", [["U1", 6]], []], [1, "AD620", "SOIC-8_3.9x4.9mm_P1.27mm", [["U3", 5]], []], [1, "AP1117-50", "SOT-223-3_TabPin2", [["U5", 35]], []], [1, "LM321", "SOT-23-5", [["U2", 36]], []], [1, "POT", "PinHeader_1x03_P2.54mm_Vertical", [["RV2", 34]], []], [1, "BSS138", "SOT-23", [["Q1", 8]], []], [1, "IRFR9024N", "TO-252-3_TabPin2", [["Q2", 7]], []], [1, "Power_Supply", "Molex_KK-254_AE-6410-02A_1x02_P2.54mm_Vertical", [["J1", 10]], []], [1, "JBC_handle", "Molex_KK-254_AE-6410-03A_1x03_P2.54mm_Vertical", [["J2", 9]], []], [1, "OLED", "PinHeader_1x04_P2.54mm_Vertical", [["J3", 25]], []]], "B": []}, "font_data": {"C": {"w": 1.0, "l": [[[0.8095238095238095, -0.14285714285714285], [0.7619047619047619, -0.09523809523809523], [0.6190476190476191, -0.047619047619047616], [0.5238095238095237, -0.047619047619047616], [0.38095238095238093, -0.09523809523809523], [0.2857142857142857, -0.19047619047619047], [0.23809523809523808, -0.2857142857142857], [0.19047619047619047, -0.47619047619047616], [0.19047619047619047, -0.6190476190476191], [0.23809523809523808, -0.8095238095238095], [0.2857142857142857, -0.9047619047619047], [0.38095238095238093, -1.0], [0.5238095238095237, -1.0476190476190474], [0.6190476190476191, -1.0476190476190474], [0.7619047619047619, -1.0], [0.8095238095238095, -0.9523809523809523]]]}, "h": {"w": 0.9047619047619047, "l": [[[0.23809523809523808, -0.047619047619047616], [0.23809523809523808, -1.0476190476190474]], [[0.6666666666666666, -0.047619047619047616], [0.6666666666666666, -0.5714285714285714], [0.6190476190476191, -0.6666666666666666], [0.5238095238095237, -0.7142857142857142], [0.38095238095238093, -0.7142857142857142], [0.2857142857142857, -0.6666666666666666], [0.23809523809523808, -0.6190476190476191]]]}, "o": {"w": 0.9047619047619047, "l": [[[0.38095238095238093, -0.047619047619047616], [0.2857142857142857, -0.09523809523809523], [0.23809523809523808, -0.14285714285714285], [0.19047619047619047, -0.23809523809523808], [0.19047619047619047, -0.5238095238095237], [0.23809523809523808, -0.6190476190476191], [0.2857142857142857, -0.6666666666666666], [0.38095238095238093, -0.7142857142857142], [0.5238095238095237, -0.7142857142857142], [0.6190476190476191, -0.6666666666666666], [0.6666666666666666, -0.6190476190476191], [0.7142857142857142, -0.5238095238095237], [0.7142857142857142, -0.23809523809523808], [0.6666666666666666, -0.14285714285714285], [0.6190476190476191, -0.09523809523809523], [0.5238095238095237, -0.047619047619047616], [0.38095238095238093, -0.047619047619047616]]]}, "k": {"w": 0.8095238095238095, "l": [[[0.23809523809523808, -0.047619047619047616], [0.23809523809523808, -1.0476190476190474]], [[0.3333333333333333, -0.42857142857142855], [0.6190476190476191, -0.047619047619047616]], [[0.6190476190476191, -0.7142857142857142], [0.23809523809523808, -0.3333333333333333]]]}, "i": {"w": 0.47619047619047616, "l": [[[0.23809523809523808, -0.047619047619047616], [0.23809523809523808, -0.7142857142857142]], [[0.23809523809523808, -1.0476190476190474], [0.19047619047619047, -1.0], [0.23809523809523808, -0.9523809523809523], [0.2857142857142857, -1.0], [0.23809523809523808, -1.0476190476190474], [0.23809523809523808, -0.9523809523809523]]]}, "t": {"w": 0.5714285714285714, "l": [[[0.09523809523809523, -0.7142857142857142], [0.47619047619047616, -0.7142857142857142]], [[0.23809523809523808, -1.0476190476190474], [0.23809523809523808, -0.19047619047619047], [0.2857142857142857, -0.09523809523809523], [0.38095238095238093, -0.047619047619047616], [0.47619047619047616, -0.047619047619047616]]]}, "y": {"w": 0.7619047619047619, "l": [[[0.14285714285714285, -0.7142857142857142], [0.38095238095238093, -0.047619047619047616]], [[0.6190476190476191, -0.7142857142857142], [0.38095238095238093, -0.047619047619047616], [0.2857142857142857, 0.19047619047619047], [0.23809523809523808, 0.23809523809523808], [0.14285714285714285, 0.2857142857142857]]]}, "!": {"w": 0.47619047619047616, "l": [[[0.23809523809523808, -0.14285714285714285], [0.2857142857142857, -0.09523809523809523], [0.23809523809523808, -0.047619047619047616], [0.19047619047619047, -0.09523809523809523], [0.23809523809523808, -0.14285714285714285], [0.23809523809523808, -0.047619047619047616]], [[0.23809523809523808, -0.42857142857142855], [0.19047619047619047, -1.0], [0.23809523809523808, -1.0476190476190474], [0.2857142857142857, -1.0], [0.23809523809523808, -0.42857142857142855], [0.23809523809523808, -1.0476190476190474]]]}, "S": {"w": 0.9523809523809523, "l": [[[0.19047619047619047, -0.09523809523809523], [0.3333333333333333, -0.047619047619047616], [0.5714285714285714, -0.047619047619047616], [0.6666666666666666, -0.09523809523809523], [0.7142857142857142, -0.14285714285714285], [0.7619047619047619, -0.23809523809523808], [0.7619047619047619, -0.3333333333333333], [0.7142857142857142, -0.42857142857142855], [0.6666666666666666, -0.47619047619047616], [0.5714285714285714, -0.5238095238095237], [0.38095238095238093, -0.5714285714285714], [0.2857142857142857, -0.6190476190476191], [0.23809523809523808, -0.6666666666666666], [0.19047619047619047, -0.7619047619047619], [0.19047619047619047, -0.8571428571428571], [0.23809523809523808, -0.9523809523809523], [0.2857142857142857, -1.0], [0.38095238095238093, -1.0476190476190474], [0.6190476190476191, -1.0476190476190474], [0.7619047619047619, -1.0]]]}, "l": {"w": 0.5238095238095237, "l": [[[0.38095238095238093, -0.047619047619047616], [0.2857142857142857, -0.09523809523809523], [0.23809523809523808, -0.19047619047619047], [0.23809523809523808, -1.0476190476190474]]]}, "d": {"w": 0.9047619047619047, "l": [[[0.6666666666666666, -0.047619047619047616], [0.6666666666666666, -1.0476190476190474]], [[0.6666666666666666, -0.09523809523809523], [0.5714285714285714, -0.047619047619047616], [0.38095238095238093, -0.047619047619047616], [0.2857142857142857, -0.09523809523809523], [0.23809523809523808, -0.14285714285714285], [0.19047619047619047, -0.23809523809523808], [0.19047619047619047, -0.5238095238095237], [0.23809523809523808, -0.6190476190476191], [0.2857142857142857, -0.6666666666666666], [0.38095238095238093, -0.7142857142857142], [0.5714285714285714, -0.7142857142857142], [0.6666666666666666, -0.6666666666666666]]]}, "e": {"w": 0.8571428571428571, "l": [[[0.6190476190476191, -0.09523809523809523], [0.5238095238095237, -0.047619047619047616], [0.3333333333333333, -0.047619047619047616], [0.23809523809523808, -0.09523809523809523], [0.19047619047619047, -0.19047619047619047], [0.19047619047619047, -0.5714285714285714], [0.23809523809523808, -0.6666666666666666], [0.3333333333333333, -0.7142857142857142], [0.5238095238095237, -0.7142857142857142], [0.6190476190476191, -0.6666666666666666], [0.6666666666666666, -0.5714285714285714], [0.6666666666666666, -0.47619047619047616], [0.19047619047619047, -0.38095238095238093]]]}, "r": {"w": 0.6190476190476191, "l": [[[0.23809523809523808, -0.047619047619047616], [0.23809523809523808, -0.7142857142857142]], [[0.23809523809523808, -0.5238095238095237], [0.2857142857142857, -0.6190476190476191], [0.3333333333333333, -0.6666666666666666], [0.42857142857142855, -0.7142857142857142], [0.5238095238095237, -0.7142857142857142]]]}, "n": {"w": 0.9047619047619047, "l": [[[0.23809523809523808, -0.7142857142857142], [0.23809523809523808, -0.047619047619047616]], [[0.23809523809523808, -0.6190476190476191], [0.2857142857142857, -0.6666666666666666], [0.38095238095238093, -0.7142857142857142], [0.5238095238095237, -0.7142857142857142], [0.6190476190476191, -0.6666666666666666], [0.6666666666666666, -0.5714285714285714], [0.6666666666666666, -0.047619047619047616]]]}, "g": {"w": 0.9047619047619047, "l": [[[0.6666666666666666, -0.7142857142857142], [0.6666666666666666, 0.09523809523809523], [0.6190476190476191, 0.19047619047619047], [0.5714285714285714, 0.23809523809523808], [0.47619047619047616, 0.2857142857142857], [0.3333333333333333, 0.2857142857142857], [0.23809523809523808, 0.23809523809523808]], [[0.6666666666666666, -0.09523809523809523], [0.5714285714285714, -0.047619047619047616], [0.38095238095238093, -0.047619047619047616], [0.2857142857142857, -0.09523809523809523], [0.23809523809523808, -0.14285714285714285], [0.19047619047619047, -0.23809523809523808], [0.19047619047619047, -0.5238095238095237], [0.23809523809523808, -0.6190476190476191], [0.2857142857142857, -0.6666666666666666], [0.38095238095238093, -0.7142857142857142], [0.5714285714285714, -0.7142857142857142], [0.6666666666666666, -0.6666666666666666]]]}, " ": {"w": 0.7619047619047619, "l": []}, "s": {"w": 0.8095238095238095, "l": [[[0.19047619047619047, -0.09523809523809523], [0.2857142857142857, -0.047619047619047616], [0.47619047619047616, -0.047619047619047616], [0.5714285714285714, -0.09523809523809523], [0.6190476190476191, -0.19047619047619047], [0.6190476190476191, -0.23809523809523808], [0.5714285714285714, -0.3333333333333333], [0.47619047619047616, -0.38095238095238093], [0.3333333333333333, -0.38095238095238093], [0.23809523809523808, -0.42857142857142855], [0.19047619047619047, -0.5238095238095237], [0.19047619047619047, -0.5714285714285714], [0.23809523809523808, -0.6666666666666666], [0.3333333333333333, -0.7142857142857142], [0.47619047619047616, -0.7142857142857142], [0.5714285714285714, -0.6666666666666666]]]}, "a": {"w": 0.9047619047619047, "l": [[[0.6666666666666666, -0.047619047619047616], [0.6666666666666666, -0.5714285714285714], [0.6190476190476191, -0.6666666666666666], [0.5238095238095237, -0.7142857142857142], [0.3333333333333333, -0.7142857142857142], [0.23809523809523808, -0.6666666666666666]], [[0.6666666666666666, -0.09523809523809523], [0.5714285714285714, -0.047619047619047616], [0.3333333333333333, -0.047619047619047616], [0.23809523809523808, -0.09523809523809523], [0.19047619047619047, -0.19047619047619047], [0.19047619047619047, -0.2857142857142857], [0.23809523809523808, -0.38095238095238093], [0.3333333333333333, -0.42857142857142855], [0.5714285714285714, -0.42857142857142855], [0.6666666666666666, -0.47619047619047616]]]}, "c": {"w": 0.8571428571428571, "l": [[[0.6666666666666666, -0.09523809523809523], [0.5714285714285714, -0.047619047619047616], [0.38095238095238093, -0.047619047619047616], [0.2857142857142857, -0.09523809523809523], [0.23809523809523808, -0.14285714285714285], [0.19047619047619047, -0.23809523809523808], [0.19047619047619047, -0.5238095238095237], [0.23809523809523808, -0.6190476190476191], [0.2857142857142857, -0.6666666666666666], [0.38095238095238093, -0.7142857142857142], [0.5714285714285714, -0.7142857142857142], [0.6666666666666666, -0.6666666666666666]]]}, "b": {"w": 0.9047619047619047, "l": [[[0.23809523809523808, -0.047619047619047616], [0.23809523809523808, -1.0476190476190474]], [[0.23809523809523808, -0.6666666666666666], [0.3333333333333333, -0.7142857142857142], [0.5238095238095237, -0.7142857142857142], [0.6190476190476191, -0.6666666666666666], [0.6666666666666666, -0.6190476190476191], [0.7142857142857142, -0.5238095238095237], [0.7142857142857142, -0.23809523809523808], [0.6666666666666666, -0.14285714285714285], [0.6190476190476191, -0.09523809523809523], [0.5238095238095237, -0.047619047619047616], [0.3333333333333333, -0.047619047619047616], [0.23809523809523808, -0.09523809523809523]]]}, "R": {"w": 1.0, "l": [[[0.8095238095238094, -0.047619047619047616], [0.4761904761904761, -0.5238095238095237]], [[0.23809523809523803, -0.047619047619047616], [0.23809523809523803, -1.0476190476190474], [0.619047619047619, -1.0476190476190474], [0.7142857142857142, -1.0], [0.7619047619047619, -0.9523809523809523], [0.8095238095238094, -0.8571428571428571], [0.8095238095238094, -0.7142857142857142], [0.7619047619047619, -0.6190476190476191], [0.7142857142857142, -0.5714285714285714], [0.619047619047619, -0.5238095238095237], [0.23809523809523803, -0.5238095238095237]]]}, "v": {"w": 0.7619047619047619, "l": [[[0.14285714285714285, -0.7142857142857142], [0.38095238095238093, -0.047619047619047616], [0.6190476190476191, -0.7142857142857142]]]}, "B": {"w": 1.0, "l": [[[0.5714285714285714, -0.5714285714285714], [0.7142857142857142, -0.5238095238095237], [0.7619047619047619, -0.47619047619047616], [0.8095238095238094, -0.38095238095238093], [0.8095238095238094, -0.23809523809523808], [0.7619047619047619, -0.14285714285714285], [0.7142857142857142, -0.09523809523809523], [0.619047619047619, -0.047619047619047616], [0.23809523809523803, -0.047619047619047616], [0.23809523809523803, -1.0476190476190474], [0.5714285714285714, -1.0476190476190474], [0.6666666666666665, -1.0], [0.7142857142857142, -0.9523809523809523], [0.7619047619047619, -0.8571428571428571], [0.7619047619047619, -0.7619047619047619], [0.7142857142857142, -0.6666666666666666], [0.6666666666666665, -0.6190476190476191], [0.5714285714285714, -0.5714285714285714], [0.23809523809523803, -0.5714285714285714]]]}, "\u017e": {"w": 0.8095238095238095, "l": [[[0.14285714285714285, -0.7142857142857142], [0.6666666666666666, -0.7142857142857142], [0.14285714285714285, -0.047619047619047616], [0.6666666666666666, -0.047619047619047616]], [[0.23809523809523808, -1.0952380952380951], [0.42857142857142855, -0.9523809523809523], [0.6190476190476191, -1.0952380952380951]]]}, "1": {"w": 0.9523809523809523, "l": [[[0.7619047619047619, -0.047619047619047616], [0.19047619047619047, -0.047619047619047616]], [[0.47619047619047616, -0.047619047619047616], [0.47619047619047616, -1.0476190476190474], [0.38095238095238093, -0.9047619047619047], [0.2857142857142857, -0.8095238095238095], [0.19047619047619047, -0.7619047619047619]]]}, "2": {"w": 0.9523809523809523, "l": [[[0.19047619047619047, -0.9523809523809523], [0.23809523809523808, -1.0], [0.3333333333333333, -1.0476190476190474], [0.5714285714285714, -1.0476190476190474], [0.6666666666666666, -1.0], [0.7142857142857142, -0.9523809523809523], [0.7619047619047619, -0.8571428571428571], [0.7619047619047619, -0.7619047619047619], [0.7142857142857142, -0.6190476190476191], [0.14285714285714285, -0.047619047619047616], [0.7619047619047619, -0.047619047619047616]]]}, "/": {"w": 1.0476190476190474, "l": [[[0.9523809523809523, -1.0952380952380951], [0.09523809523809518, 0.19047619047619047]]]}, "0": {"w": 0.9523809523809523, "l": [[[0.42857142857142855, -1.0476190476190474], [0.5238095238095237, -1.0476190476190474], [0.6190476190476191, -1.0], [0.6666666666666666, -0.9523809523809523], [0.7142857142857142, -0.8571428571428571], [0.7619047619047619, -0.6666666666666666], [0.7619047619047619, -0.42857142857142855], [0.7142857142857142, -0.23809523809523808], [0.6666666666666666, -0.14285714285714285], [0.6190476190476191, -0.09523809523809523], [0.5238095238095237, -0.047619047619047616], [0.42857142857142855, -0.047619047619047616], [0.3333333333333333, -0.09523809523809523], [0.2857142857142857, -0.14285714285714285], [0.23809523809523808, -0.23809523809523808], [0.19047619047619047, -0.42857142857142855], [0.19047619047619047, -0.6666666666666666], [0.23809523809523808, -0.8571428571428571], [0.2857142857142857, -0.9523809523809523], [0.3333333333333333, -1.0], [0.42857142857142855, -1.0476190476190474]]]}, "8": {"w": 0.9523809523809523, "l": [[[0.38095238095238093, -0.6190476190476191], [0.2857142857142857, -0.6666666666666666], [0.23809523809523808, -0.7142857142857142], [0.19047619047619047, -0.8095238095238095], [0.19047619047619047, -0.8571428571428571], [0.23809523809523808, -0.9523809523809523], [0.2857142857142857, -1.0], [0.38095238095238093, -1.0476190476190474], [0.5714285714285714, -1.0476190476190474], [0.6666666666666666, -1.0], [0.7142857142857142, -0.9523809523809523], [0.7619047619047619, -0.8571428571428571], [0.7619047619047619, -0.8095238095238095], [0.7142857142857142, -0.7142857142857142], [0.6666666666666666, -0.6666666666666666], [0.5714285714285714, -0.6190476190476191], [0.38095238095238093, -0.6190476190476191], [0.2857142857142857, -0.5714285714285714], [0.23809523809523808, -0.5238095238095237], [0.19047619047619047, -0.42857142857142855], [0.19047619047619047, -0.23809523809523808], [0.23809523809523808, -0.14285714285714285], [0.2857142857142857, -0.09523809523809523], [0.38095238095238093, -0.047619047619047616], [0.5714285714285714, -0.047619047619047616], [0.6666666666666666, -0.09523809523809523], [0.7142857142857142, -0.14285714285714285], [0.7619047619047619, -0.23809523809523808], [0.7619047619047619, -0.42857142857142855], [0.7142857142857142, -0.5238095238095237], [0.6666666666666666, -0.5714285714285714], [0.5714285714285714, -0.6190476190476191]]]}, "U": {"w": 1.0476190476190474, "l": [[[0.23809523809523803, -1.0476190476190474], [0.23809523809523803, -0.23809523809523808], [0.28571428571428564, -0.14285714285714285], [0.33333333333333326, -0.09523809523809523], [0.4285714285714285, -0.047619047619047616], [0.619047619047619, -0.047619047619047616], [0.7142857142857142, -0.09523809523809523], [0.7619047619047619, -0.14285714285714285], [0.8095238095238094, -0.23809523809523808], [0.8095238095238094, -1.0476190476190474]]]}, "4": {"w": 0.9523809523809523, "l": [[[0.6666666666666666, -0.7142857142857142], [0.6666666666666666, -0.047619047619047616]], [[0.42857142857142855, -1.0952380952380951], [0.19047619047619047, -0.38095238095238093], [0.8095238095238095, -0.38095238095238093]]]}, "3": {"w": 0.9523809523809523, "l": [[[0.14285714285714285, -1.0476190476190474], [0.7619047619047619, -1.0476190476190474], [0.42857142857142855, -0.6666666666666666], [0.5714285714285714, -0.6666666666666666], [0.6666666666666666, -0.6190476190476191], [0.7142857142857142, -0.5714285714285714], [0.7619047619047619, -0.47619047619047616], [0.7619047619047619, -0.23809523809523808], [0.7142857142857142, -0.14285714285714285], [0.6666666666666666, -0.09523809523809523], [0.5714285714285714, -0.047619047619047616], [0.2857142857142857, -0.047619047619047616], [0.19047619047619047, -0.09523809523809523], [0.14285714285714285, -0.14285714285714285]]]}, "Q": {"w": 1.0476190476190474, "l": [[[0.9047619047619047, 0.047619047619047616], [0.8095238095238094, 0.0], [0.7142857142857142, -0.09523809523809523], [0.5714285714285714, -0.23809523809523808], [0.4761904761904761, -0.2857142857142857], [0.3809523809523809, -0.2857142857142857]], [[0.4285714285714285, -0.047619047619047616], [0.33333333333333326, -0.09523809523809523], [0.23809523809523803, -0.19047619047619047], [0.1904761904761904, -0.38095238095238093], [0.1904761904761904, -0.7142857142857142], [0.23809523809523803, -0.9047619047619047], [0.33333333333333326, -1.0], [0.4285714285714285, -1.0476190476190474], [0.619047619047619, -1.0476190476190474], [0.7142857142857142, -1.0], [0.8095238095238094, -0.9047619047619047], [0.857142857142857, -0.7142857142857142], [0.857142857142857, -0.38095238095238093], [0.8095238095238094, -0.19047619047619047], [0.7142857142857142, -0.09523809523809523], [0.619047619047619, -0.047619047619047616], [0.4285714285714285, -0.047619047619047616]]]}, "J": {"w": 0.7619047619047619, "l": [[[0.5238095238095237, -1.0476190476190474], [0.5238095238095237, -0.3333333333333333], [0.47619047619047616, -0.19047619047619047], [0.38095238095238093, -0.09523809523809523], [0.23809523809523808, -0.047619047619047616], [0.14285714285714285, -0.047619047619047616]]]}, "9": {"w": 0.9523809523809523, "l": [[[0.2857142857142857, -0.047619047619047616], [0.47619047619047616, -0.047619047619047616], [0.5714285714285714, -0.09523809523809523], [0.6190476190476191, -0.14285714285714285], [0.7142857142857142, -0.2857142857142857], [0.7619047619047619, -0.47619047619047616], [0.7619047619047619, -0.8571428571428571], [0.7142857142857142, -0.9523809523809523], [0.6666666666666666, -1.0], [0.5714285714285714, -1.0476190476190474], [0.38095238095238093, -1.0476190476190474], [0.2857142857142857, -1.0], [0.23809523809523808, -0.9523809523809523], [0.19047619047619047, -0.8571428571428571], [0.19047619047619047, -0.6190476190476191], [0.23809523809523808, -0.5238095238095237], [0.2857142857142857, -0.47619047619047616], [0.38095238095238093, -0.42857142857142855], [0.5714285714285714, -0.42857142857142855], [0.6666666666666666, -0.47619047619047616], [0.7142857142857142, -0.5238095238095237], [0.7619047619047619, -0.6190476190476191]]]}, "D": {"w": 1.0, "l": [[[0.23809523809523803, -0.047619047619047616], [0.23809523809523803, -1.0476190476190474], [0.4761904761904761, -1.0476190476190474], [0.619047619047619, -1.0], [0.7142857142857142, -0.9047619047619047], [0.7619047619047619, -0.8095238095238095], [0.8095238095238094, -0.6190476190476191], [0.8095238095238094, -0.47619047619047616], [0.7619047619047619, -0.2857142857142857], [0.7142857142857142, -0.19047619047619047], [0.619047619047619, -0.09523809523809523], [0.4761904761904761, -0.047619047619047616], [0.23809523809523803, -0.047619047619047616]]]}, "7": {"w": 0.9523809523809523, "l": [[[0.14285714285714285, -1.0476190476190474], [0.8095238095238095, -1.0476190476190474], [0.38095238095238093, -0.047619047619047616]]]}, "6": {"w": 0.9523809523809523, "l": [[[0.6666666666666666, -1.0476190476190474], [0.47619047619047616, -1.0476190476190474], [0.38095238095238093, -1.0], [0.3333333333333333, -0.9523809523809523], [0.23809523809523808, -0.8095238095238095], [0.19047619047619047, -0.6190476190476191], [0.19047619047619047, -0.23809523809523808], [0.23809523809523808, -0.14285714285714285], [0.2857142857142857, -0.09523809523809523], [0.38095238095238093, -0.047619047619047616], [0.5714285714285714, -0.047619047619047616], [0.6666666666666666, -0.09523809523809523], [0.7142857142857142, -0.14285714285714285], [0.7619047619047619, -0.23809523809523808], [0.7619047619047619, -0.47619047619047616], [0.7142857142857142, -0.5714285714285714], [0.6666666666666666, -0.6190476190476191], [0.5714285714285714, -0.6666666666666666], [0.38095238095238093, -0.6666666666666666], [0.2857142857142857, -0.6190476190476191], [0.23809523809523808, -0.5714285714285714], [0.19047619047619047, -0.47619047619047616]]]}, "5": {"w": 0.9523809523809523, "l": [[[0.7142857142857142, -1.0476190476190474], [0.23809523809523808, -1.0476190476190474], [0.19047619047619047, -0.5714285714285714], [0.23809523809523808, -0.6190476190476191], [0.3333333333333333, -0.6666666666666666], [0.5714285714285714, -0.6666666666666666], [0.6666666666666666, -0.6190476190476191], [0.7142857142857142, -0.5714285714285714], [0.7619047619047619, -0.47619047619047616], [0.7619047619047619, -0.23809523809523808], [0.7142857142857142, -0.14285714285714285], [0.6666666666666666, -0.09523809523809523], [0.5714285714285714, -0.047619047619047616], [0.3333333333333333, -0.047619047619047616], [0.23809523809523808, -0.09523809523809523], [0.19047619047619047, -0.14285714285714285]]]}, "V": {"w": 0.8571428571428571, "l": [[[0.09523809523809523, -1.0476190476190474], [0.42857142857142855, -0.047619047619047616], [0.7619047619047619, -1.0476190476190474]]]}}}
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+/* Utility functions */
+
+var storagePrefix = 'KiCad_HTML_BOM__' + pcbdata.metadata.title + '__' +
+  pcbdata.metadata.revision + '__';
+var storage;
+
+function initStorage(key) {
+  try {
+    window.localStorage.getItem("blank");
+    storage = window.localStorage;
+  } catch (e) {
+    // localStorage not available
+  }
+  if (!storage) {
+    try {
+      window.sessionStorage.getItem("blank");
+      storage = window.sessionStorage;
+    } catch (e) {
+      // sessionStorage also not available
+    }
+  }
+}
+
+function readStorage(key) {
+  if (storage) {
+    return storage.getItem(storagePrefix + '#' + key);
+  } else {
+    return null;
+  }
+}
+
+function writeStorage(key, value) {
+  if (storage) {
+    storage.setItem(storagePrefix + '#' + key, value);
+  }
+}
+
+function fancyDblClickHandler(el, onsingle, ondouble) {
+  return function() {
+    if (el.getAttribute("data-dblclick") == null) {
+      el.setAttribute("data-dblclick", 1);
+      setTimeout(function() {
+        if (el.getAttribute("data-dblclick") == 1) {
+          onsingle();
+        }
+        el.removeAttribute("data-dblclick");
+      }, 200);
+    } else {
+      el.removeAttribute("data-dblclick");
+      ondouble();
+    }
+  }
+}
+
+function smoothScrollToRow(rowid) {
+  document.getElementById(rowid).scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+    inline: "nearest"
+  });
+}
+
+function focusInputField(input) {
+  input.scrollIntoView(false);
+  input.focus();
+  input.select();
+}
+
+function copyToClipboard() {
+  var text = '';
+  for (var node of bomhead.childNodes[0].childNodes) {
+    if (node.firstChild) {
+      text = text + node.firstChild.nodeValue;
+    }
+    if (node != bomhead.childNodes[0].lastChild) {
+      text += '\t';
+    }
+  }
+  text += '\n';
+  for (var row of bombody.childNodes) {
+    for (var cell of row.childNodes) {
+      for (var node of cell.childNodes) {
+        if (node.nodeName == "INPUT") {
+          if (node.checked) {
+            text = text + '✓';
+          }
+        } else if (node.nodeName == "MARK") {
+          text = text + node.firstChild.nodeValue;
+        } else {
+          text = text + node.nodeValue;
+        }
+      }
+      if (cell != row.lastChild) {
+        text += '\t';
+      }
+    }
+    text += '\n';
+  }
+  var textArea = document.createElement("textarea");
+  textArea.classList.add('clipboard-temp');
+  textArea.value = text;
+
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    if (document.execCommand('copy')) {
+      console.log('Bom copied to clipboard.');
+    }
+  } catch (err) {
+    console.log('Can not copy to clipboard.');
+  }
+
+  document.body.removeChild(textArea);
+}
+
+function removeGutterNode(node) {
+  for (var i = 0; i < node.childNodes.length; i++) {
+    if (node.childNodes[i].classList &&
+      node.childNodes[i].classList.contains("gutter")) {
+      node.removeChild(node.childNodes[i]);
+      break;
+    }
+  }
+}
+
+function cleanGutters() {
+  removeGutterNode(document.getElementById("bot"));
+  removeGutterNode(document.getElementById("canvasdiv"));
+}
+
+var units = {
+  prefixes: {
+    giga: ["G", "g", "giga", "Giga", "GIGA"],
+    mega: ["M", "mega", "Mega", "MEGA"],
+    kilo: ["K", "k", "kilo", "Kilo", "KILO"],
+    milli: ["m", "milli", "Milli", "MILLI"],
+    micro: ["U", "u", "micro", "Micro", "MICRO", "μ", "µ"], // different utf8 μ
+    nano: ["N", "n", "nano", "Nano", "NANO"],
+    pico: ["P", "p", "pico", "Pico", "PICO"],
+  },
+  unitsShort: ["R", "r", "Ω", "F", "f", "H", "h"],
+  unitsLong: [
+    "OHM", "Ohm", "ohm", "ohms",
+    "FARAD", "Farad", "farad",
+    "HENRY", "Henry", "henry"
+  ],
+  getMultiplier: function(s) {
+    if (this.prefixes.giga.includes(s)) return 1e9;
+    if (this.prefixes.mega.includes(s)) return 1e6;
+    if (this.prefixes.kilo.includes(s)) return 1e3;
+    if (this.prefixes.milli.includes(s)) return 1e-3;
+    if (this.prefixes.micro.includes(s)) return 1e-6;
+    if (this.prefixes.nano.includes(s)) return 1e-9;
+    if (this.prefixes.pico.includes(s)) return 1e-12;
+    return 1;
+  },
+  valueRegex: null,
+}
+
+function initUtils() {
+  var allPrefixes = units.prefixes.giga
+                    .concat(units.prefixes.mega)
+                    .concat(units.prefixes.kilo)
+                    .concat(units.prefixes.milli)
+                    .concat(units.prefixes.micro)
+                    .concat(units.prefixes.nano)
+                    .concat(units.prefixes.pico);
+  var allUnits = units.unitsShort.concat(units.unitsLong);
+  units.valueRegex = new RegExp("^([0-9\.]+)" +
+                         "\\s*(" + allPrefixes.join("|") + ")?" +
+                         "(" + allUnits.join("|") + ")?" +
+                         "(\\b.*)?$", "");
+  units.valueAltRegex = new RegExp("^([0-9]*)" +
+                         "(" + units.unitsShort.join("|") + ")?" +
+                         "([GgMmKkUuNnPp])?" +
+                         "([0-9]*)" +
+                         "(\\b.*)?$", "");
+  for (var bomtable of Object.values(pcbdata.bom)) {
+    for (var row of bomtable) {
+      row.push(parseValue(row[1], row[3][0][0]));
+    }
+  }
+}
+
+function parseValue(val, ref) {
+  var inferUnit = (unit, ref) => {
+    if (unit) {
+      unit = unit.toLowerCase();
+      if (unit == 'Ω' || unit == "ohm" || unit == "ohms") {
+        unit = 'r';
+      }
+      unit = unit[0];
+    } else {
+      ref = /^([a-z]+)\d+$/i.exec(ref);
+      if (ref) {
+        ref = ref[1].toLowerCase();
+        if (ref == "c") unit = 'f';
+        else if (ref == "l") unit = 'h';
+        else if (ref == "r" || ref == "rv") unit = 'r';
+        else unit = null;
+      }
+    }
+    return unit;
+  };
+  val = val.replace(/,/g, "");
+  var match = units.valueRegex.exec(val);
+  var unit;
+  if (match) {
+    val = parseFloat(match[1]);
+    if (match[2]) {
+      val = val * units.getMultiplier(match[2]);
+    }
+    unit = inferUnit(match[3], ref);
+    if (!unit) return null;
+    else return {
+      val: val,
+      unit: unit,
+      extra: match[4],
+    }
+  }
+  match = units.valueAltRegex.exec(val);
+  if (match && (match[1] || match[4])) {
+    val = parseFloat(match[1] + "." + match[4]);
+    if (match[3]) {
+      val = val * units.getMultiplier(match[3]);
+    }
+    unit = inferUnit(match[2], ref);
+    if (!unit) return null;
+    else return {
+      val: val,
+      unit: unit,
+      extra: match[5],
+    }
+  }
+  return null;
+}
+
+function valueCompare(a, b, stra, strb) {
+  if (a === null && b === null) {
+    // Failed to parse both values, compare them as strings.
+    if (stra != strb) return stra > strb ? 1 : -1;
+    else return 0;
+  } else if (a === null) {
+    return 1;
+  } else if (b === null) {
+    return -1;
+  } else {
+    if (a.unit != b.unit) return a.unit > b.unit ? 1 : -1;
+    else if (a.val != b.val) return a.val > b.val ? 1 : -1;
+    else if (a.extra != b.extra) return a.extra > b.extra ? 1 : -1;
+    else return 0;
+  }
+}
+
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+/* PCB rendering code */
+
+var redrawOnDrag = true;
+var boardRotation = 0;
+
+function deg2rad(deg) {
+  return deg * Math.PI / 180;
+}
+
+function calcFontPoint(linepoint, text, offsetx, offsety, tilt) {
+  var point = [
+    linepoint[0] * text.width + offsetx,
+    linepoint[1] * text.height + offsety
+  ];
+  // Adding half a line height here is technically a bug
+  // but pcbnew currently does the same, text is slightly shifted.
+  point[0] -= (point[1] + text.height * 0.5) * tilt;
+  return point;
+}
+
+function drawtext(ctx, text, color, flip) {
+  ctx.save();
+  ctx.translate(...text.pos);
+  var angle = -text.angle;
+  if (text.attr.includes("mirrored")) {
+    ctx.scale(-1, 1);
+    angle = -angle;
+  }
+  var tilt = 0;
+  if (text.attr.includes("italic")) {
+    tilt = 0.125;
+  }
+  var interline = (text.height * 1.5 + text.thickness) / 2;
+  var txt = text.text.split("\n");
+  // KiCad ignores last empty line.
+  if (txt[txt.length-1] == '') txt.pop();
+  ctx.rotate(deg2rad(angle));
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineCap = "round";
+  ctx.lineWidth = text.thickness;
+  for (var i in txt) {
+    var offsety = (-(txt.length - 1) + i * 2) * interline + text.height / 2;
+    var lineWidth = 0;
+    for (var c of txt[i]) {
+      lineWidth += pcbdata.font_data[c].w * text.width;
+    }
+    var offsetx = 0;
+    switch (text.horiz_justify) {
+      case -1:
+        // Justify left, do nothing
+        break;
+      case 0:
+        // Justify center
+        offsetx -= lineWidth / 2;
+        break;
+      case 1:
+        // Justify right
+        offsetx -= lineWidth;
+        break;
+    }
+    for (var c of txt[i]) {
+      for (var line of pcbdata.font_data[c].l) {
+        // Drawing each segment separately instead of
+        // polyline because round line caps don't work in joints
+        for (var i = 0; i < line.length - 1; i++) {
+          ctx.beginPath();
+          ctx.moveTo(...calcFontPoint(line[i], text, offsetx, offsety, tilt));
+          ctx.lineTo(...calcFontPoint(line[i + 1], text, offsetx, offsety, tilt));
+          ctx.stroke();
+        }
+      }
+      offsetx += pcbdata.font_data[c].w * text.width;
+    }
+  }
+  ctx.restore();
+}
+
+function drawedge(ctx, scalefactor, edge, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1 / scalefactor, edge.width);
+  ctx.lineCap = "round";
+  if (edge.type == "segment") {
+    ctx.beginPath();
+    ctx.moveTo(...edge.start);
+    ctx.lineTo(...edge.end);
+    ctx.stroke();
+  }
+  if (edge.type == "arc") {
+    ctx.beginPath();
+    ctx.arc(
+      ...edge.start,
+      edge.radius,
+      deg2rad(edge.startangle),
+      deg2rad(edge.endangle));
+    ctx.stroke();
+  }
+  if (edge.type == "circle") {
+    ctx.beginPath();
+    ctx.arc(
+      ...edge.start,
+      edge.radius,
+      0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.stroke();
+  }
+}
+
+function drawRoundRect(ctx, color, size, radius, ctxmethod) {
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  var x = size[0] * -0.5;
+  var y = size[1] * -0.5;
+  var width = size[0];
+  var height = size[1];
+  ctx.moveTo(x, 0);
+  ctx.arcTo(x, y + height, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x + width, y, radius);
+  ctx.arcTo(x + width, y, x, y, radius);
+  ctx.arcTo(x, y, x, y + height, radius);
+  ctx.closePath();
+  ctxmethod();
+}
+
+function drawOblong(ctx, color, size, ctxmethod) {
+  drawRoundRect(ctx, color, size, Math.min(size[0], size[1]) / 2, ctxmethod);
+}
+
+function drawPolygons(ctx, color, polygons, ctxmethod) {
+  ctx.fillStyle = color;
+  for (var polygon of polygons) {
+    ctx.beginPath();
+    for (var vertex of polygon) {
+      ctx.lineTo(...vertex)
+    }
+    ctx.closePath();
+    ctxmethod();
+  }
+}
+
+function drawPolygonShape(ctx, shape, color) {
+  ctx.save();
+  ctx.translate(...shape.pos);
+  ctx.rotate(deg2rad(-shape.angle));
+  drawPolygons(ctx, color, shape.polygons, ctx.fill.bind(ctx));
+  ctx.restore();
+}
+
+function drawDrawing(ctx, layer, scalefactor, drawing, color) {
+  if (["segment", "arc", "circle"].includes(drawing.type)) {
+    drawedge(ctx, scalefactor, drawing, color);
+  } else if (drawing.type == "polygon") {
+    drawPolygonShape(ctx, drawing, color);
+  } else {
+    drawtext(ctx, drawing, color, layer == "B");
+  }
+}
+
+function drawCircle(ctx, radius, ctxmethod) {
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+  ctx.closePath();
+  ctxmethod();
+}
+
+function drawPad(ctx, pad, color, outline) {
+  ctx.save();
+  ctx.translate(...pad.pos);
+  ctx.rotate(deg2rad(pad.angle));
+  if (pad.offset) {
+    ctx.translate(...pad.offset);
+  }
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  var ctxmethod = outline ? ctx.stroke.bind(ctx) : ctx.fill.bind(ctx);
+  if (pad.shape == "rect") {
+    var rect = [...pad.size.map(c => -c * 0.5), ...pad.size];
+    if (outline) {
+      ctx.strokeRect(...rect);
+    } else {
+      ctx.fillRect(...rect);
+    }
+  } else if (pad.shape == "oval") {
+    drawOblong(ctx, color, pad.size, ctxmethod);
+  } else if (pad.shape == "circle") {
+    drawCircle(ctx, pad.size[0] / 2, ctxmethod);
+  } else if (pad.shape == "roundrect") {
+    drawRoundRect(ctx, color, pad.size, pad.radius, ctxmethod);
+  } else if (pad.shape == "custom") {
+    drawPolygons(ctx, color, pad.polygons, ctxmethod);
+  }
+  if (pad.type == "th" && !outline) {
+    ctx.fillStyle = "#CCCCCC";
+    if (pad.drillshape == "oblong") {
+      drawOblong(ctx, "#CCCCCC", pad.drillsize, ctxmethod);
+    } else {
+      drawCircle(ctx, pad.drillsize[0] / 2, ctxmethod);
+    }
+  }
+  ctx.restore();
+}
+
+function drawModule(ctx, layer, scalefactor, module, padcolor, outlinecolor, highlight) {
+  if (highlight) {
+    // draw bounding box
+    if (module.layer == layer) {
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ctx.translate(...module.bbox.pos);
+      ctx.fillStyle = padcolor;
+      ctx.fillRect(
+        0, 0,
+        ...module.bbox.size);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = padcolor;
+      ctx.strokeRect(
+        0, 0,
+        ...module.bbox.size);
+      ctx.restore();
+    }
+  }
+  // draw drawings
+  for (var drawing of module.drawings) {
+    if (drawing.layer == layer) {
+      drawDrawing(ctx, layer, scalefactor, drawing.drawing, padcolor);
+    }
+  }
+  // draw pads
+  for (var pad of module.pads) {
+    if (pad.layers.includes(layer)) {
+      drawPad(ctx, pad, padcolor, false);
+      if (pad.pin1 && highlightpin1) {
+        drawPad(ctx, pad, outlinecolor, true);
+      }
+    }
+  }
+}
+
+function drawEdges(canvas, scalefactor) {
+  var ctx = canvas.getContext("2d");
+  var edgecolor = getComputedStyle(topmostdiv).getPropertyValue('--pcb-edge-color');
+  for (var edge of pcbdata.edges) {
+    drawedge(ctx, scalefactor, edge, edgecolor);
+  }
+}
+
+function drawModules(canvas, layer, scalefactor, highlight) {
+  var ctx = canvas.getContext("2d");
+  ctx.lineWidth = 3 / scalefactor;
+  var style = getComputedStyle(topmostdiv);
+  var padcolor = style.getPropertyValue('--pad-color');
+  var outlinecolor = style.getPropertyValue('--pin1-outline-color');
+  if (highlight > 0) {
+    padcolor = style.getPropertyValue('--pad-color-highlight');
+    outlinecolor = style.getPropertyValue('--pin1-outline-color-highlight');
+  }
+  for (var i = 0; i < pcbdata.modules.length; i++) {
+    var mod = pcbdata.modules[i];
+    if (!highlight || highlightedModules.includes(i)) {
+      drawModule(ctx, layer, scalefactor, mod, padcolor, outlinecolor, highlight);
+    }
+  }
+}
+
+function drawSilkscreen(canvas, layer, scalefactor) {
+  var ctx = canvas.getContext("2d");
+  for (var d of pcbdata.silkscreen[layer]) {
+    if (["segment", "arc", "circle"].includes(d.type)) {
+      drawedge(ctx, scalefactor, d, "#aa4");
+    } else if (d.type == "polygon") {
+      drawPolygonShape(ctx, d, "#4aa");
+    } else {
+      drawtext(ctx, d, "#4aa", layer == "B");
+    }
+  }
+}
+
+function clearCanvas(canvas) {
+  var ctx = canvas.getContext("2d");
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
+
+function drawHighlightsOnLayer(canvasdict) {
+  clearCanvas(canvasdict.highlight);
+  drawModules(canvasdict.highlight, canvasdict.layer,
+    canvasdict.transform.s * canvasdict.transform.zoom, true);
+}
+
+function drawHighlights() {
+  drawHighlightsOnLayer(allcanvas.front);
+  drawHighlightsOnLayer(allcanvas.back);
+}
+
+function drawBackground(canvasdict) {
+  clearCanvas(canvasdict.bg);
+  clearCanvas(canvasdict.silk);
+  drawEdges(canvasdict.bg, canvasdict.transform.s);
+  drawModules(canvasdict.bg, canvasdict.layer,
+    canvasdict.transform.s * canvasdict.transform.zoom, false);
+  drawSilkscreen(canvasdict.silk, canvasdict.layer, canvasdict.transform.s);
+}
+
+function prepareCanvas(canvas, flip, transform) {
+  var ctx = canvas.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  var fontsize = 1.55;
+  ctx.scale(transform.zoom, transform.zoom);
+  ctx.translate(transform.panx, transform.pany);
+  if (flip) {
+    ctx.scale(-1, 1);
+  }
+  ctx.translate(transform.x, transform.y);
+  ctx.rotate(deg2rad(boardRotation));
+  ctx.scale(transform.s, transform.s);
+}
+
+function prepareLayer(canvasdict) {
+  var flip = (canvasdict.layer == "B");
+  for (var c of ["bg", "silk", "highlight"]) {
+    prepareCanvas(canvasdict[c], flip, canvasdict.transform);
+  }
+}
+
+function rotateVector(v, angle) {
+  angle = deg2rad(angle);
+  return [
+    v[0] * Math.cos(angle) - v[1] * Math.sin(angle),
+    v[0] * Math.sin(angle) + v[1] * Math.cos(angle)
+  ];
+}
+
+function applyRotation(bbox) {
+  var corners = [
+    [bbox.minx, bbox.miny],
+    [bbox.minx, bbox.maxy],
+    [bbox.maxx, bbox.miny],
+    [bbox.maxx, bbox.maxy],
+  ];
+  corners = corners.map((v) => rotateVector(v, boardRotation));
+  return {
+    minx: corners.reduce((a, v) => Math.min(a, v[0]), Infinity),
+    miny: corners.reduce((a, v) => Math.min(a, v[1]), Infinity),
+    maxx: corners.reduce((a, v) => Math.max(a, v[0]), -Infinity),
+    maxy: corners.reduce((a, v) => Math.max(a, v[1]), -Infinity),
+  }
+}
+
+function recalcLayerScale(canvasdict) {
+  var canvasdivid = {
+    "F": "frontcanvas",
+    "B": "backcanvas"
+  } [canvasdict.layer];
+  var width = document.getElementById(canvasdivid).clientWidth * 2;
+  var height = document.getElementById(canvasdivid).clientHeight * 2;
+  var bbox = applyRotation(pcbdata.edges_bbox);
+  var scalefactor = 0.98 * Math.min(
+    width / (bbox.maxx - bbox.minx),
+    height / (bbox.maxy - bbox.miny)
+  );
+  if (scalefactor < 0.1) {
+    scalefactor = 1;
+  }
+  canvasdict.transform.s = scalefactor;
+  var flip = (canvasdict.layer == "B");
+  if (flip) {
+    canvasdict.transform.x = -((bbox.maxx + bbox.minx) * scalefactor + width) * 0.5;
+  } else {
+    canvasdict.transform.x = -((bbox.maxx + bbox.minx) * scalefactor - width) * 0.5;
+  }
+  canvasdict.transform.y = -((bbox.maxy + bbox.miny) * scalefactor - height) * 0.5;
+  for (var c of ["bg", "silk", "highlight"]) {
+    canvas = canvasdict[c];
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = (width / 2) + "px";
+    canvas.style.height = (height / 2) + "px";
+  }
+}
+
+function redrawCanvas(layerdict) {
+  prepareLayer(layerdict);
+  drawBackground(layerdict);
+  drawHighlightsOnLayer(layerdict);
+}
+
+function resizeCanvas(layerdict) {
+  recalcLayerScale(layerdict);
+  redrawCanvas(layerdict);
+}
+
+function resizeAll() {
+  resizeCanvas(allcanvas.front);
+  resizeCanvas(allcanvas.back);
+}
+
+function bboxScan(layer, x, y) {
+  var result = [];
+  for (var i = 0; i < pcbdata.modules.length; i++) {
+    var module = pcbdata.modules[i];
+    if (module.layer == layer) {
+      var b = module.bbox;
+      if (b.pos[0] <= x && b.pos[0] + b.size[0] >= x &&
+        b.pos[1] <= y && b.pos[1] + b.size[1] >= y) {
+        result.push(i);
+      }
+    }
+  }
+  return result;
+}
+
+function handleMouseDown(e, layerdict) {
+  if (e.which != 1) {
+    return;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+  layerdict.transform.mousestartx = e.offsetX;
+  layerdict.transform.mousestarty = e.offsetY;
+  layerdict.transform.mousedownx = e.offsetX;
+  layerdict.transform.mousedowny = e.offsetY;
+  layerdict.transform.mousedown = true;
+}
+
+function handleMouseClick(e, layerdict) {
+  var x = e.offsetX;
+  var y = e.offsetY;
+  var t = layerdict.transform;
+  if (layerdict.layer == "B") {
+    x = (2 * x / t.zoom - t.panx + t.x) / -t.s;
+  } else {
+    x = (2 * x / t.zoom - t.panx - t.x) / t.s;
+  }
+  y = (2 * y / t.zoom - t.y - t.pany) / t.s;
+  var v = rotateVector([x, y], -boardRotation);
+  var modules = bboxScan(layerdict.layer, v[0], v[1]);
+  if (modules.length > 0) {
+    modulesClicked(modules);
+  }
+}
+
+function handleMouseUp(e, layerdict) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.which == 1 &&
+    layerdict.transform.mousedown &&
+    layerdict.transform.mousedownx == e.offsetX &&
+    layerdict.transform.mousedowny == e.offsetY) {
+    // This is just a click
+    handleMouseClick(e, layerdict);
+    layerdict.transform.mousedown = false;
+    return;
+  }
+  if (e.which == 3) {
+    // Reset pan and zoom on right click.
+    layerdict.transform.panx = 0;
+    layerdict.transform.pany = 0;
+    layerdict.transform.zoom = 1;
+    redrawCanvas(layerdict);
+  } else if (!redrawOnDrag) {
+    redrawCanvas(layerdict);
+  }
+  layerdict.transform.mousedown = false;
+}
+
+function handleMouseMove(e, layerdict) {
+  if (!layerdict.transform.mousedown) {
+    return;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+  var dx = e.offsetX - layerdict.transform.mousestartx;
+  var dy = e.offsetY - layerdict.transform.mousestarty;
+  layerdict.transform.panx += 2 * dx / layerdict.transform.zoom;
+  layerdict.transform.pany += 2 * dy / layerdict.transform.zoom;
+  layerdict.transform.mousestartx = e.offsetX;
+  layerdict.transform.mousestarty = e.offsetY;
+  if (redrawOnDrag) {
+    redrawCanvas(layerdict);
+  }
+}
+
+function handleMouseWheel(e, layerdict) {
+  e.preventDefault();
+  e.stopPropagation();
+  var t = layerdict.transform;
+  var wheeldelta = e.deltaY;
+  if (e.deltaMode == 1) {
+    // FF only, scroll by lines
+    wheeldelta *= 30;
+  } else if (e.deltaMode == 2) {
+    wheeldelta *= 300;
+  }
+  var m = Math.pow(1.1, -wheeldelta / 40);
+  // Limit amount of zoom per tick.
+  if (m > 2) {
+    m = 2;
+  } else if (m < 0.5) {
+    m = 0.5;
+  }
+  t.zoom *= m;
+  var zoomd = (1 - m) / t.zoom;
+  t.panx += 2 * e.offsetX * zoomd;
+  t.pany += 2 * e.offsetY * zoomd;
+  redrawCanvas(layerdict);
+}
+
+function addMouseHandlers(div, layerdict) {
+  div.onmousedown = function(e) {
+    handleMouseDown(e, layerdict);
+  };
+  div.onmousemove = function(e) {
+    handleMouseMove(e, layerdict);
+  };
+  div.onmouseup = function(e) {
+    handleMouseUp(e, layerdict);
+  };
+  div.onmouseout = function(e) {
+    handleMouseUp(e, layerdict);
+  }
+  div.onwheel = function(e) {
+    handleMouseWheel(e, layerdict);
+  }
+  for (var element of [div, layerdict.bg, layerdict.silk, layerdict.highlight]) {
+    element.addEventListener("contextmenu", function(e) {
+      e.preventDefault();
+    }, false);
+  }
+}
+
+function setRedrawOnDrag(value) {
+  redrawOnDrag = value;
+  writeStorage("redrawOnDrag", value);
+}
+
+function setBoardRotation(value) {
+  boardRotation = value * 5;
+  writeStorage("boardRotation", boardRotation);
+  document.getElementById("rotationDegree").textContent = boardRotation;
+  resizeAll();
+}
+
+function initRender() {
+  allcanvas = {
+    front: {
+      transform: {
+        x: 0,
+        y: 0,
+        s: 1,
+        panx: 0,
+        pany: 0,
+        zoom: 1,
+        mousestartx: 0,
+        mousestarty: 0,
+        mousedown: false,
+      },
+      bg: document.getElementById("F_bg"),
+      silk: document.getElementById("F_slk"),
+      highlight: document.getElementById("F_hl"),
+      layer: "F",
+    },
+    back: {
+      transform: {
+        x: 0,
+        y: 0,
+        s: 1,
+        panx: 0,
+        pany: 0,
+        zoom: 1,
+        mousestartx: 0,
+        mousestarty: 0,
+        mousedown: false,
+      },
+      bg: document.getElementById("B_bg"),
+      silk: document.getElementById("B_slk"),
+      highlight: document.getElementById("B_hl"),
+      layer: "B",
+    }
+  };
+  addMouseHandlers(document.getElementById("frontcanvas"), allcanvas.front);
+  addMouseHandlers(document.getElementById("backcanvas"), allcanvas.back);
+}
+
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+/* DOM manipulation and misc code */
+
+var bomsplit;
+var canvassplit;
+var canvaslayout = "default";
+var bomlayout = "default";
+var initDone = false;
+var bomSortFunction = null;
+var currentSortColumn = null;
+var currentSortOrder = null;
+var currentHighlightedRowId;
+var highlightHandlers = [];
+var moduleIndexToHandler = {};
+var highlightedModules = [];
+var checkboxes = [];
+var bomCheckboxes = "";
+var highlightpin1 = false;
+var lastClicked;
+
+function dbg(html) {
+  dbgdiv.innerHTML = html;
+}
+
+function setDarkMode(value) {
+  if (value) {
+    topmostdiv.classList.add("dark");
+  } else {
+    topmostdiv.classList.remove("dark");
+  }
+  writeStorage("darkmode", value);
+  if (initDone) {
+    redrawCanvas(allcanvas.front);
+    redrawCanvas(allcanvas.back);
+  }
+}
+
+function setHighlightPin1(value) {
+  writeStorage("highlightpin1", value);
+  highlightpin1 = value;
+  if (initDone) {
+    redrawCanvas(allcanvas.front);
+    redrawCanvas(allcanvas.back);
+  }
+}
+
+function getStoredCheckboxRefs(checkbox) {
+  function convert(ref) {
+    var intref = parseInt(ref);
+    if (isNaN(intref)) {
+      for (var i = 0; i < pcbdata.modules.length; i++) {
+        if (pcbdata.modules[i].ref == ref) {
+          return i;
+        }
+      }
+      return -1;
+    } else {
+      return intref;
+    }
+  }
+  var existingRefs = readStorage("checkbox_" + checkbox);
+  if (!existingRefs) {
+    return new Set();
+  } else {
+    return new Set(existingRefs.split(",").map(r => convert(r)));
+  }
+}
+
+function getCheckboxState(checkbox, references) {
+  var storedRefsSet = getStoredCheckboxRefs(checkbox);
+  var currentRefsSet = new Set(references.map(r => r[1]));
+  // Get difference of current - stored
+  var difference = new Set(currentRefsSet);
+  for (ref of storedRefsSet) {
+    difference.delete(ref);
+  }
+  if (difference.size == 0) {
+    // All the current refs are stored
+    return "checked";
+  } else if (difference.size == currentRefsSet.size) {
+    // None of the current refs are stored
+    return "unchecked";
+  } else {
+    // Some of the refs are stored
+    return "indeterminate";
+  }
+}
+
+function setBomCheckboxState(checkbox, element, references) {
+  var state = getCheckboxState(checkbox, references);
+  element.checked = (state == "checked");
+  element.indeterminate = (state == "indeterminate");
+}
+
+function createCheckboxChangeHandler(checkbox, references) {
+  return function() {
+    refsSet = getStoredCheckboxRefs(checkbox);
+    if (this.checked) {
+      // checkbox ticked
+      for (var ref of references) {
+        refsSet.add(ref[1]);
+      }
+    } else {
+      // checkbox unticked
+      for (var ref of references) {
+        refsSet.delete(ref[1]);
+      }
+    }
+    writeStorage("checkbox_" + checkbox, [...refsSet].join(","));
+  }
+}
+
+function createRowHighlightHandler(rowid, refs) {
+  return function() {
+    if (currentHighlightedRowId) {
+      if (currentHighlightedRowId == rowid) {
+        return;
+      }
+      document.getElementById(currentHighlightedRowId).classList.remove("highlighted");
+    }
+    document.getElementById(rowid).classList.add("highlighted");
+    currentHighlightedRowId = rowid;
+    highlightedModules = refs.map(r => r[1]);
+    drawHighlights();
+  }
+}
+
+function entryMatches(entry) {
+  // check refs
+  for (var ref of entry[3]) {
+    if (ref[0].toLowerCase().indexOf(filter) >= 0) {
+      return true;
+    }
+  }
+  // check extra fields
+  for (var i in config.extra_fields) {
+    if (entry[4][i].toLowerCase().indexOf(filter) >= 0) {
+      return true;
+    }
+  }
+  // check value
+  if (entry[1].toLowerCase().indexOf(filter) >= 0) {
+    return true;
+  }
+  // check footprint
+  if (entry[2].toLowerCase().indexOf(filter) >= 0) {
+    return true;
+  }
+  return false;
+}
+
+function findRefInEntry(entry) {
+  return entry[3].filter(r => r[0].toLowerCase() == reflookup);
+}
+
+function highlightFilter(s) {
+  if (!filter) {
+    return s;
+  }
+  var parts = s.toLowerCase().split(filter);
+  if (parts.length == 1) {
+    return s;
+  }
+  var r = "";
+  var pos = 0;
+  for (var i in parts) {
+    if (i > 0) {
+      r += '<mark class="highlight">' +
+        s.substring(pos, pos + filter.length) +
+        '</mark>';
+      pos += filter.length;
+    }
+    r += s.substring(pos, pos + parts[i].length);
+    pos += parts[i].length;
+  }
+  return r;
+}
+
+function checkboxSetUnsetAllHandler(checkboxname) {
+  return function() {
+    var checkboxnum = 0;
+    while (checkboxnum < checkboxes.length &&
+      checkboxes[checkboxnum].toLowerCase() != checkboxname.toLowerCase()) {
+      checkboxnum++;
+    }
+    if (checkboxnum >= checkboxes.length) {
+      return;
+    }
+    var allset = true;
+    var checkbox;
+    var row;
+    for (row of bombody.childNodes) {
+      checkbox = row.childNodes[checkboxnum + 1].childNodes[0];
+      if (!checkbox.checked || checkbox.indeterminate) {
+        allset = false;
+        break;
+      }
+    }
+    for (row of bombody.childNodes) {
+      checkbox = row.childNodes[checkboxnum + 1].childNodes[0];
+      checkbox.checked = !allset;
+      checkbox.indeterminate = false;
+      checkbox.onchange();
+    }
+  }
+}
+
+function createColumnHeader(name, cls, comparator) {
+  var th = document.createElement("TH");
+  th.innerHTML = name;
+  th.classList.add(cls);
+  th.style.cursor = "pointer";
+  var span = document.createElement("SPAN");
+  span.classList.add("sortmark");
+  span.classList.add("none");
+  th.appendChild(span);
+  th.onclick = function() {
+    if (currentSortColumn && this !== currentSortColumn) {
+      // Currently sorted by another column
+      currentSortColumn.childNodes[1].classList.remove(currentSortOrder);
+      currentSortColumn.childNodes[1].classList.add("none");
+      currentSortColumn = null;
+      currentSortOrder = null;
+    }
+    if (currentSortColumn && this === currentSortColumn) {
+      // Already sorted by this column
+      if (currentSortOrder == "asc") {
+        // Sort by this column, descending order
+        bomSortFunction = function(a, b) {
+          return -comparator(a, b);
+        }
+        currentSortColumn.childNodes[1].classList.remove("asc");
+        currentSortColumn.childNodes[1].classList.add("desc");
+        currentSortOrder = "desc";
+      } else {
+        // Unsort
+        bomSortFunction = null;
+        currentSortColumn.childNodes[1].classList.remove("desc");
+        currentSortColumn.childNodes[1].classList.add("none");
+        currentSortColumn = null;
+        currentSortOrder = null;
+      }
+    } else {
+      // Sort by this column, ascending order
+      bomSortFunction = comparator;
+      currentSortColumn = this;
+      currentSortColumn.childNodes[1].classList.remove("none");
+      currentSortColumn.childNodes[1].classList.add("asc");
+      currentSortOrder = "asc";
+    }
+    populateBomBody();
+  }
+  return th;
+}
+
+function populateBomHeader() {
+  while (bomhead.firstChild) {
+    bomhead.removeChild(bomhead.firstChild);
+  }
+  var tr = document.createElement("TR");
+  var th = document.createElement("TH");
+  th.classList.add("numCol");
+  tr.appendChild(th);
+  checkboxes = bomCheckboxes.split(",").filter((e) => e);
+  var checkboxCompareClosure = function(checkbox) {
+    return (a, b) => {
+      var stateA = getCheckboxState(checkbox, a[3]);
+      var stateB = getCheckboxState(checkbox, b[3]);
+      if (stateA > stateB) return -1;
+      if (stateA < stateB) return 1;
+      return 0;
+    }
+  }
+  for (var checkbox of checkboxes) {
+    th = createColumnHeader(
+      checkbox, "bom-checkbox", checkboxCompareClosure(checkbox));
+    th.onclick = fancyDblClickHandler(
+      th, th.onclick.bind(th), checkboxSetUnsetAllHandler(checkbox));
+    tr.appendChild(th);
+  }
+  tr.appendChild(createColumnHeader("References", "References", (a, b) => {
+    var i = 0;
+    while (i < a[3].length && i < b[3].length) {
+      if (a[3][i] != b[3][i]) return a[3][i] > b[3][i] ? 1 : -1;
+      i++;
+    }
+    return a[3].length - b[3].length;
+  }));
+  // Extra fields
+  if (config.extra_fields.length > 0) {
+    var extraFieldCompareClosure = function(fieldIndex) {
+      return (a, b) => {
+        var fa = a[4][fieldIndex];
+        var fb = b[4][fieldIndex];
+        if (fa != fb) return fa > fb ? 1 : -1;
+        else return 0;
+      }
+    }
+    for (var i in config.extra_fields) {
+      tr.appendChild(createColumnHeader(
+        config.extra_fields[i], "extra", extraFieldCompareClosure(i)));
+    }
+  }
+  tr.appendChild(createColumnHeader("Value", "Value", (a, b) => {
+    return valueCompare(a[5], b[5], a[1], b[1]);
+  }));
+  tr.appendChild(createColumnHeader("Footprint", "Footprint", (a, b) => {
+    if (a[2] != b[2]) return a[2] > b[2] ? 1 : -1;
+    else return 0;
+  }));
+  tr.appendChild(createColumnHeader("Quantity", "Quantity", (a, b) => {
+    return a[3].length - b[3].length;
+  }));
+  bomhead.appendChild(tr);
+}
+
+function populateBomBody() {
+  while (bom.firstChild) {
+    bom.removeChild(bom.firstChild);
+  }
+  highlightHandlers = [];
+  moduleIndexToHandler = {};
+  currentHighlightedRowId = null;
+  var first = true;
+  switch (canvaslayout) {
+    case 'F':
+      bomtable = pcbdata.bom.F;
+      break;
+    case 'FB':
+      bomtable = pcbdata.bom.both;
+      break;
+    case 'B':
+      bomtable = pcbdata.bom.B;
+      break;
+  }
+  if (bomSortFunction) {
+    bomtable = bomtable.slice().sort(bomSortFunction);
+  }
+  for (var i in bomtable) {
+    var bomentry = bomtable[i];
+    if (filter && !entryMatches(bomentry)) {
+      continue;
+    }
+    var references = bomentry[3];
+    if (reflookup) {
+      references = findRefInEntry(bomentry);
+      if (references.length == 0) {
+        continue;
+      }
+    }
+    var tr = document.createElement("TR");
+    var td = document.createElement("TD");
+    var rownum = +i + 1;
+    tr.id = "bomrow" + rownum;
+    td.textContent = rownum;
+    tr.appendChild(td);
+    // Checkboxes
+    for (var checkbox of checkboxes) {
+      if (checkbox) {
+        td = document.createElement("TD");
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.onchange = createCheckboxChangeHandler(checkbox, references);
+        setBomCheckboxState(checkbox, input, references);
+        td.appendChild(input);
+        tr.appendChild(td);
+      }
+    }
+    // References
+    td = document.createElement("TD");
+    td.innerHTML = highlightFilter(references.map(r => r[0]).join(", "));
+    tr.appendChild(td);
+    // Extra fields
+    for (var i in config.extra_fields) {
+      td = document.createElement("TD");
+      td.innerHTML = highlightFilter(bomentry[4][i]);
+      tr.appendChild(td);
+    }
+    // Value
+    td = document.createElement("TD");
+    td.innerHTML = highlightFilter(bomentry[1]);
+    tr.appendChild(td);
+    // Footprint
+    td = document.createElement("TD");
+    td.innerHTML = highlightFilter(bomentry[2]);
+    tr.appendChild(td);
+    // Quantity
+    td = document.createElement("TD");
+    td.textContent = bomentry[3].length;
+    tr.appendChild(td);
+    bom.appendChild(tr);
+    var handler = createRowHighlightHandler(tr.id, references);
+    tr.onmousemove = handler;
+    highlightHandlers.push({
+      id: tr.id,
+      handler: handler,
+      refs: references
+    });
+    for (var refIndex of references.map(r => r[1])) {
+      moduleIndexToHandler[refIndex] = handler;
+    }
+    if ((filter || reflookup) && first) {
+      handler();
+      first = false;
+    }
+  }
+}
+
+function highlightPreviousRow() {
+  if (!currentHighlightedRowId) {
+    highlightHandlers[highlightHandlers.length - 1].handler();
+  } else {
+    if (highlightHandlers.length > 1 &&
+      highlightHandlers[0].id == currentHighlightedRowId) {
+      highlightHandlers[highlightHandlers.length - 1].handler();
+    } else {
+      for (var i = 0; i < highlightHandlers.length - 1; i++) {
+        if (highlightHandlers[i + 1].id == currentHighlightedRowId) {
+          highlightHandlers[i].handler();
+          break;
+        }
+      }
+    }
+  }
+  smoothScrollToRow(currentHighlightedRowId);
+}
+
+function highlightNextRow() {
+  if (!currentHighlightedRowId) {
+    highlightHandlers[0].handler();
+  } else {
+    if (highlightHandlers.length > 1 &&
+      highlightHandlers[highlightHandlers.length - 1].id == currentHighlightedRowId) {
+      highlightHandlers[0].handler();
+    } else {
+      for (var i = 1; i < highlightHandlers.length; i++) {
+        if (highlightHandlers[i - 1].id == currentHighlightedRowId) {
+          highlightHandlers[i].handler();
+          break;
+        }
+      }
+    }
+  }
+  smoothScrollToRow(currentHighlightedRowId);
+}
+
+function populateBomTable() {
+  populateBomHeader();
+  populateBomBody();
+}
+
+function modulesClicked(moduleIndexes) {
+  var lastClickedIndex = moduleIndexes.indexOf(lastClicked);
+  for (var i = 1; i <= moduleIndexes.length; i++) {
+    var refIndex = moduleIndexes[(lastClickedIndex + i) % moduleIndexes.length];
+    if (refIndex in moduleIndexToHandler) {
+      lastClicked = refIndex;
+      moduleIndexToHandler[refIndex]();
+      smoothScrollToRow(currentHighlightedRowId);
+      break;
+    }
+  }
+}
+
+function updateFilter(input) {
+  filter = input.toLowerCase();
+  populateBomTable();
+}
+
+function updateRefLookup(input) {
+  reflookup = input.toLowerCase();
+  populateBomTable();
+}
+
+function silkscreenVisible(visible) {
+  if (visible) {
+    allcanvas.front.silk.style.display = "";
+    allcanvas.back.silk.style.display = "";
+    writeStorage("silkscreenVisible", true);
+  } else {
+    allcanvas.front.silk.style.display = "none";
+    allcanvas.back.silk.style.display = "none";
+    writeStorage("silkscreenVisible", false);
+  }
+}
+
+function changeCanvasLayout(layout) {
+  document.getElementById("fl-btn").classList.remove("depressed");
+  document.getElementById("fb-btn").classList.remove("depressed");
+  document.getElementById("bl-btn").classList.remove("depressed");
+  switch (layout) {
+    case 'F':
+      document.getElementById("fl-btn").classList.add("depressed");
+      if (bomlayout != "bom-only") {
+        canvassplit.collapse(1);
+      }
+      break;
+    case 'B':
+      document.getElementById("bl-btn").classList.add("depressed");
+      if (bomlayout != "bom-only") {
+        canvassplit.collapse(0);
+      }
+      break;
+    default:
+      document.getElementById("fb-btn").classList.add("depressed");
+      if (bomlayout != "bom-only") {
+        canvassplit.setSizes([50, 50]);
+      }
+  }
+  canvaslayout = layout;
+  writeStorage("canvaslayout", layout);
+  resizeAll();
+  populateBomTable();
+}
+
+function populateMetadata() {
+  document.getElementById("title").innerHTML = pcbdata.metadata.title;
+  document.getElementById("revision").innerHTML = "Rev: " + pcbdata.metadata.revision;
+  document.getElementById("company").innerHTML = pcbdata.metadata.company;
+  document.getElementById("filedate").innerHTML = pcbdata.metadata.date;
+  if (pcbdata.metadata.title != "") {
+    document.title = pcbdata.metadata.title + " BOM";
+  }
+}
+
+function changeBomLayout(layout) {
+  document.getElementById("bom-btn").classList.remove("depressed");
+  document.getElementById("lr-btn").classList.remove("depressed");
+  document.getElementById("tb-btn").classList.remove("depressed");
+  switch (layout) {
+    case 'bom-only':
+      document.getElementById("bom-btn").classList.add("depressed");
+      if (bomsplit) {
+        bomsplit.destroy();
+        bomsplit = null;
+        canvassplit.destroy();
+        canvassplit = null;
+      }
+      document.getElementById("frontcanvas").style.display = "none";
+      document.getElementById("backcanvas").style.display = "none";
+      document.getElementById("bot").style.height = "";
+      break;
+    case 'top-bottom':
+      document.getElementById("tb-btn").classList.add("depressed");
+      document.getElementById("frontcanvas").style.display = "";
+      document.getElementById("backcanvas").style.display = "";
+      document.getElementById("bot").style.height = "calc(100% - 80px)";
+      document.getElementById("bomdiv").classList.remove("split-horizontal");
+      document.getElementById("canvasdiv").classList.remove("split-horizontal");
+      document.getElementById("frontcanvas").classList.add("split-horizontal");
+      document.getElementById("backcanvas").classList.add("split-horizontal");
+      if (bomsplit) {
+        bomsplit.destroy();
+        bomsplit = null;
+        canvassplit.destroy();
+        canvassplit = null;
+      }
+      bomsplit = Split(['#bomdiv', '#canvasdiv'], {
+        sizes: [50, 50],
+        onDragEnd: resizeAll,
+        direction: "vertical",
+        gutterSize: 5
+      });
+      canvassplit = Split(['#frontcanvas', '#backcanvas'], {
+        sizes: [50, 50],
+        gutterSize: 5,
+        onDragEnd: resizeAll
+      });
+      break;
+    case 'left-right':
+      document.getElementById("lr-btn").classList.add("depressed");
+      document.getElementById("frontcanvas").style.display = "";
+      document.getElementById("backcanvas").style.display = "";
+      document.getElementById("bot").style.height = "calc(100% - 80px)";
+      document.getElementById("bomdiv").classList.add("split-horizontal");
+      document.getElementById("canvasdiv").classList.add("split-horizontal");
+      document.getElementById("frontcanvas").classList.remove("split-horizontal");
+      document.getElementById("backcanvas").classList.remove("split-horizontal");
+      if (bomsplit) {
+        bomsplit.destroy();
+        bomsplit = null;
+        canvassplit.destroy();
+        canvassplit = null;
+      }
+      bomsplit = Split(['#bomdiv', '#canvasdiv'], {
+        sizes: [50, 50],
+        onDragEnd: resizeAll,
+        gutterSize: 5
+      });
+      canvassplit = Split(['#frontcanvas', '#backcanvas'], {
+        sizes: [50, 50],
+        gutterSize: 5,
+        direction: "vertical",
+        onDragEnd: resizeAll
+      });
+  }
+  bomlayout = layout;
+  writeStorage("bomlayout", layout);
+  changeCanvasLayout(canvaslayout);
+}
+
+function focusFilterField() {
+  focusInputField(document.getElementById("filter"));
+}
+
+function focusRefLookupField() {
+  focusInputField(document.getElementById("reflookup"));
+}
+
+function toggleBomCheckbox(bomrowid, checkboxnum) {
+  if (!bomrowid || checkboxnum > checkboxes.length) {
+    return;
+  }
+  var bomrow = document.getElementById(bomrowid);
+  var checkbox = bomrow.childNodes[checkboxnum].childNodes[0];
+  checkbox.checked = !checkbox.checked;
+  checkbox.indeterminate = false;
+  checkbox.onchange();
+}
+
+function checkBomCheckbox(bomrowid, checkboxname) {
+  var checkboxnum = 0;
+  while (checkboxnum < checkboxes.length &&
+    checkboxes[checkboxnum].toLowerCase() != checkboxname.toLowerCase()) {
+    checkboxnum++;
+  }
+  if (!bomrowid || checkboxnum >= checkboxes.length) {
+    return;
+  }
+  var bomrow = document.getElementById(bomrowid);
+  var checkbox = bomrow.childNodes[checkboxnum + 1].childNodes[0];
+  checkbox.checked = true;
+  checkbox.indeterminate = false;
+  checkbox.onchange();
+}
+
+function setBomCheckboxes(value) {
+  bomCheckboxes = value;
+  writeStorage("bomCheckboxes", value);
+  populateBomTable();
+}
+
+document.onkeydown = function(e) {
+  switch (e.key) {
+    case "n":
+      if (document.activeElement.type == "text") {
+        return;
+      }
+      if (currentHighlightedRowId !== null) {
+        checkBomCheckbox(currentHighlightedRowId, "placed");
+        highlightNextRow();
+        e.preventDefault();
+      }
+      break;
+    case "ArrowUp":
+      highlightPreviousRow();
+      e.preventDefault();
+      break;
+    case "ArrowDown":
+      highlightNextRow();
+      e.preventDefault();
+      break;
+    default:
+      break;
+  }
+  if (e.altKey) {
+    switch (e.key) {
+      case "f":
+        focusFilterField();
+        e.preventDefault();
+        break;
+      case "r":
+        focusRefLookupField();
+        e.preventDefault();
+        break;
+      case "z":
+        changeBomLayout("bom-only");
+        e.preventDefault();
+        break;
+      case "x":
+        changeBomLayout("left-right");
+        e.preventDefault();
+        break;
+      case "c":
+        changeBomLayout("top-bottom");
+        e.preventDefault();
+        break;
+      case "v":
+        changeCanvasLayout("F");
+        e.preventDefault();
+        break;
+      case "b":
+        changeCanvasLayout("FB");
+        e.preventDefault();
+        break;
+      case "n":
+        changeCanvasLayout("B");
+        e.preventDefault();
+        break;
+      default:
+        break;
+    }
+    if (e.key >= '1' && e.key <= '9') {
+      toggleBomCheckbox(currentHighlightedRowId, parseInt(e.key));
+    }
+  }
+}
+
+function initDefaults() {
+  bomlayout = readStorage("bomlayout");
+  if (bomlayout === null) {
+    bomlayout = config.bom_view;
+  }
+  if (!['bom-only', 'left-right', 'top-bottom'].includes(bomlayout)) {
+    bomlayout = config.bom_view;
+  }
+  canvaslayout = readStorage("canvaslayout");
+  if (canvaslayout === null) {
+    canvaslayout = config.layer_view;
+  }
+  bomCheckboxes = readStorage("bomCheckboxes");
+  if (bomCheckboxes === null) {
+    bomCheckboxes = config.checkboxes;
+  }
+  document.getElementById("bomCheckboxes").value = bomCheckboxes;
+
+  var b = readStorage("silkscreenVisible");
+  if (b === null) {
+    b = config.show_silkscreen;
+  } else {
+    b = (b == "true");
+  }
+  document.getElementById("silkscreenCheckbox").checked = b;
+  silkscreenVisible(b);
+
+  b = readStorage("redrawOnDrag");
+  if (b === null) {
+    b = config.redraw_on_drag;
+  } else {
+    b = (b == "true");
+  }
+  document.getElementById("dragCheckbox").checked = b;
+  setRedrawOnDrag(b);
+
+  b = readStorage("darkmode");
+  if (b === null) {
+    b = config.dark_mode;
+  } else {
+    b = (b == "true");
+  }
+  document.getElementById("darkmodeCheckbox").checked = b;
+  setDarkMode(b);
+
+  b = readStorage("highlightpin1");
+  if (b === null) {
+    b = config.highlight_pin1;
+  } else {
+    b = (b == "true");
+  }
+  document.getElementById("highlightpin1Checkbox").checked = b;
+  setHighlightPin1(b);
+
+  boardRotation = readStorage("boardRotation");
+  if (boardRotation === null) {
+    boardRotation = config.board_rotation * 5;
+  } else {
+    boardRotation = parseInt(boardRotation);
+  }
+  document.getElementById("boardRotation").value = boardRotation / 5;
+  document.getElementById("rotationDegree").textContent = boardRotation;
+}
+
+window.onload = function(e) {
+  initUtils();
+  initRender();
+  initStorage();
+  initDefaults();
+  cleanGutters();
+  populateMetadata();
+  dbgdiv = document.getElementById("dbg");
+  bom = document.getElementById("bombody");
+  bomhead = document.getElementById("bomhead");
+  filter = "";
+  reflookup = "";
+  initDone = true;
+  // Triggers render
+  changeBomLayout(bomlayout);
+}
+
+window.onresize = resizeAll;
+window.matchMedia("print").addListener(resizeAll);
+
+///////////////////////////////////////////////
+
+  </script>
+</head>
+
+<body>
+<div id="topmostdiv" style="width: 100%; height: 100%">
+  <div id="top">
+    <div style="float: right;">
+      <div class="hideonprint menu" style="float: right; margin: 10px; top: 8px;">
+        <button class="menubtn"></button>
+        <div class="menu-content">
+          <label class="menu-label menu-label-top">
+            <input id="darkmodeCheckbox" type="checkbox" onchange="setDarkMode(this.checked)">
+            Dark mode
+          </label>
+          <label class="menu-label">
+            <input id="silkscreenCheckbox" type="checkbox" checked onchange="silkscreenVisible(this.checked)">
+            Show silkscreen
+          </label>
+          <label class="menu-label">
+            <input id="highlightpin1Checkbox" type="checkbox" onchange="setHighlightPin1(this.checked)">
+            Highlight first pin
+          </label>
+          <label class="menu-label">
+            <input id="dragCheckbox" type="checkbox" checked onchange="setRedrawOnDrag(this.checked)">
+            Continuous redraw on drag
+          </label>
+          <label class="menu-label">
+            <span>Board rotation</span>
+            <span style="float: right"><span id="rotationDegree">0</span>&#176;</span>
+            <input id="boardRotation" type="range" min="-36" max="36" value="0" class="slider" oninput="setBoardRotation(this.value)">
+          </label>
+          <label class="menu-label">
+            <div style="margin-left: 5px">Bom checkboxes</div>
+            <input id="bomCheckboxes" class="menu-textbox" type=text
+                   oninput="setBomCheckboxes(this.value)">
+          </label>
+          <label class="menu-label">
+            <span class="shameless-plug">
+              <span>Created using</span>
+              <a target="blank" href="https://github.com/openscopeproject/InteractiveHtmlBom">InteractiveHtmlBom</a>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="button-container hideonprint"
+           style="float: right; margin: 10px; position: relative; top: 8px">
+        <button id="fl-btn" class="left-most-button" onclick="changeCanvasLayout('F')"
+                title="Front only">F
+        </button>
+        <button id="fb-btn" class="middle-button" onclick="changeCanvasLayout('FB')"
+                title="Front and Back">FB
+        </button>
+        <button id="bl-btn" class="right-most-button" onclick="changeCanvasLayout('B')"
+                title="Back only">B
+        </button>
+      </div>
+      <div class="button-container hideonprint"
+           style="float: right; margin: 10px; position: relative; top: 8px">
+        <button id="bom-btn" class="left-most-button" onclick="changeBomLayout('bom-only')"
+                title="BOM only"></button>
+        <button id="lr-btn" class="middle-button" onclick="changeBomLayout('left-right')"
+                title="BOM left, drawings right"></button>
+        <button id="tb-btn" class="right-most-button" onclick="changeBomLayout('top-bottom')"
+                title="BOM top, drawings bot"></button>
+      </div>
+    </div>
+    <div id="fileinfodiv" style="overflow: auto;">
+      <table class="fileinfo">
+        <tbody>
+          <tr>
+            <td id="title" class="title" style="width: 70%">
+              Title
+            </td>
+            <td id="revision" class="title" style="width: 30%">
+              Revision
+            </td>
+          </tr>
+          <tr>
+            <td id="company">
+              Kicad version
+            </td>
+            <td id="filedate">
+              Date
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="bot" class="split" style="height: calc(100% - 80px)">
+    <div id="bomdiv" class="split split-horizontal">
+      <div style="width: 100%">
+        <input id="reflookup" class="searchbox reflookup hideonprint" type="text" placeholder="Ref lookup"
+               oninput="updateRefLookup(this.value)">
+        <input id="filter" class="searchbox filter hideonprint" type="text" placeholder="Filter"
+               oninput="updateFilter(this.value)">
+        <div class="button-container hideonprint" style="float: left">
+          <button id="copy" title="Copy bom table to clipboard"
+               onclick="copyToClipboard()"></button>
+        </div>
+      </div>
+      <div id="dbg"></div>
+      <table class="bom">
+        <thead id="bomhead">
+        </thead>
+        <tbody id="bombody">
+        </tbody>
+      </table>
+    </div>
+    <div id="canvasdiv" class="split split-horizontal">
+      <div id="frontcanvas" class="split" style="overflow: hidden">
+        <div style="position: relative; width: 100%; height: 100%;">
+          <canvas id="F_bg" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+          <canvas id="F_slk" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+          <canvas id="F_hl" style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>
+        </div>
+      </div>
+      <div id="backcanvas" class="split" style="overflow: hidden">
+        <div style="position: relative; width: 100%; height: 100%;">
+          <canvas id="B_bg" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+          <canvas id="B_slk" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+          <canvas id="B_hl" style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+
+</html>

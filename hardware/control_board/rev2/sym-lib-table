@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "soldering_station-rescue")(type "Legacy")(uri "/home/radek/Dropbox/devel/soldering station/hardware/control_board/rev2/soldering_station-rescue.lib")(options "")(descr ""))
+)
