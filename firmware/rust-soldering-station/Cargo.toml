@@ -2,6 +2,7 @@
 name = "rust-soldering-station"
 version = "0.1.0"
 authors = ["Radovan Blažek <blazra@gmail.com>"]
+license = "0BSD"
 
 [[bin]]
 name = "rust-soldering-station"
