@@ -4,23 +4,49 @@
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
 extern crate embedded_graphics;
+extern crate embedded_hal;
 extern crate numtoa;
 extern crate panic_semihosting;
 extern crate rtfm;
 extern crate ssd1306;
 extern crate stm32f1xx_hal;
 
+use rt::{exception, ExceptionFrame};
+use rtfm::{app, Instant};
+use numtoa::NumToA;
+
+use ssd1306::prelude::*;
+use ssd1306::mode::GraphicsMode;
+use ssd1306::Builder;
+
 use embedded_graphics::fonts::Font12x16;
 use embedded_graphics::fonts::Font6x8;
 use embedded_graphics::prelude::*;
-use numtoa::NumToA;
-use rt::{exception, ExceptionFrame};
-use rtfm::{app, Instant};
-use ssd1306::mode::RawMode;
-use ssd1306::prelude::*;
-use ssd1306::Builder;
-use stm32f1xx_hal::i2c::{BlockingI2c, DutyCycle, Mode};
-use stm32f1xx_hal::prelude::*;
+
+use stm32f1xx_hal::{
+    prelude::*,
+    pac,
+    gpio::{gpioa::PA0, gpioc::PC13, gpiob::PB10, gpiob::PB11, Output, PushPull, OpenDrain, Alternate},
+    device::I2C2,
+    device::TIM2,
+    device::ADC1,
+    pwm::{C1, Pwm, Pins},
+    i2c::{BlockingI2c, DutyCycle, Mode},
+};
+
+use embedded_hal::digital::v2::OutputPin;
+
+struct MyChannels(PA0<Alternate<PushPull>>);
+
+impl Pins<TIM2> for MyChannels
+{
+    const REMAP: u8 = 0b00;
+    const C1: bool = true;
+    const C2: bool = false;
+    const C3: bool = false;
+    const C4: bool = false;
+    type Channels = Pwm<TIM2, C1>;
+}
 
 /////////////////////////////////////////
 // Pins in HW revision 2:              //
@@ -33,28 +59,21 @@ use stm32f1xx_hal::prelude::*;
 // SDA:             PB11               //
 /////////////////////////////////////////
 
-#[app(device = stm32f1xx_hal::device)]
+#[rtfm::app(device = stm32f1xx_hal::pac)]
 const APP: () = {
     static mut display: ssd1306::mode::GraphicsMode<
         ssd1306::interface::I2cInterface<
-            stm32f1xx_hal::i2c::BlockingI2c<
-                stm32f1xx_hal::device::I2C2,
-                (
-                    stm32f1xx_hal::gpio::gpiob::PB10<
-                        stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::OpenDrain>,
-                    >,
-                    stm32f1xx_hal::gpio::gpiob::PB11<
-                        stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::OpenDrain>,
-                    >,
-                ),
-            >,
-        >,
+            BlockingI2c<
+                I2C2,(
+                    PB10<Alternate<OpenDrain>>,
+                    PB11<Alternate<OpenDrain>>
+                )
+            >
+        >
     > = ();
-    static mut led: stm32f1xx_hal::gpio::gpioc::PC13<
-        stm32f1xx_hal::gpio::Output<stm32f1xx_hal::gpio::PushPull>,
-    > = ();
-    static mut adc1: stm32f1xx_hal::device::ADC1 = ();
-    static mut pwm: stm32f1xx_hal::pwm::Pwm<stm32f1xx_hal::device::TIM2, stm32f1xx_hal::pwm::C1> = ();
+    static mut led: PC13<Output<PushPull>> = ();
+    static mut adc1: ADC1 = ();
+    static mut pwm: Pwm<TIM2, C1> = ();
 
     static mut led_on: bool = true;
     static mut chip_temperature: i16 = 0;
@@ -63,8 +82,8 @@ const APP: () = {
     static mut duty: u16 = 0;
 
     #[init(schedule = [led_blinker, regulator])]
-    fn init() {
-        let mut peripherals: stm32f1xx_hal::device::Peripherals = device;
+    fn init(c: init::Context) -> init::LateResources {
+        let mut peripherals: pac::Peripherals = c.device;
 
         let mut flash = peripherals.FLASH;
         flash.acr.modify(|_, w| unsafe { w.latency().bits(2u8) });
@@ -92,11 +111,15 @@ const APP: () = {
 
         let heater_gate = gpioa.pa0.into_alternate_push_pull(&mut gpioa.crl);
 
-        let mut pwm_temp = peripherals
-            .TIM2
-            .pwm(heater_gate, &mut afio.mapr, 20.khz(), clocks, &mut rcc.apb1);
-        pwm_temp.enable();
+        let mut pwm_temp = peripherals.TIM2.pwm(
+            MyChannels(heater_gate),
+            &mut afio.mapr,
+            20.khz(),
+            clocks,
+            &mut rcc.apb1
+        );
         pwm_temp.set_duty(0);
+        pwm_temp.enable();
 
         let scl = gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh);
         let sda = gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh);
@@ -120,113 +143,102 @@ const APP: () = {
         adc1_init(&mut adc1_temp);
         adc1_calibrate(&mut adc1_temp);
 
-        let mut display_temp: ssd1306::mode::GraphicsMode<
-            ssd1306::interface::I2cInterface<
-                stm32f1xx_hal::i2c::BlockingI2c<
-                    stm32f1xx_hal::device::I2C2,
-                    (
-                        stm32f1xx_hal::gpio::gpiob::PB10<
-                            stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::OpenDrain>,
-                        >,
-                        stm32f1xx_hal::gpio::gpiob::PB11<
-                            stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::OpenDrain>,
-                        >,
-                    ),
-                >,
-            >,
-        > = Builder::new().connect_i2c(i2c).into();
+        let mut display_temp: GraphicsMode<_> = Builder::new().connect_i2c(i2c).into();
         display_temp.init().unwrap();
         display_temp.flush().unwrap();
 
-        schedule.led_blinker(Instant::now() + 10_000_000.cycles()).unwrap();
-        schedule
+        c.schedule.led_blinker(Instant::now() + 10_000_000.cycles()).unwrap();
+        c.schedule
             .regulator(Instant::now() + 8_000_000.cycles())
             .unwrap();
 
-        led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-        adc1 = adc1_temp;
-        pwm = pwm_temp;
-        display = display_temp;
+        init::LateResources {
+            led: gpioc.pc13.into_push_pull_output(&mut gpioc.crh),
+            adc1: adc1_temp,
+            pwm: pwm_temp,
+            display: display_temp,
+        }
     }
 
     #[idle(resources = [display, chip_temperature, set_temperature, tip_temperature, duty, adc1])]
-    fn idle() -> ! {
+    fn idle(mut c: idle::Context) -> ! {
         let mut buffer1 = [0u8; 20];
         let mut buffer2 = [0u8; 20];
         let mut buffer3 = [0u8; 20];
 
         loop {
-            let chip_temperature_vsense = resources
+            let chip_temperature_vsense = c.resources
                 .adc1
                 .lock(|adc1| adc1_measure_single_blocking(&mut *adc1, 16));
             // Temperature (in °C) = {(V25 - VSENSE) / Avg_Slope} + 25.
             // V25 = 1.43 V, Avg_Slope = 4.3 mV/°C
             let chip_temp = (8i16 * (1820i16 - chip_temperature_vsense as i16) / 43i16) + 200i16;
-            resources
+            c.resources
                 .chip_temperature
                 .lock(|chip_temperature| *chip_temperature = chip_temp);
             let chip_temp_str = chip_temp.numtoa_str(10, &mut buffer1);
 
-            let set_temperature_vsense = resources
+            let set_temperature_vsense = c.resources
                 .adc1
                 .lock(|adc1| adc1_measure_single_blocking(&mut *adc1, 9));
             let set_temp = set_temperature_vsense as u16;
-            resources
+            c.resources
                 .set_temperature
                 .lock(|set_temperature| *set_temperature = set_temp);
             let set_temp_str = set_temp.numtoa_str(10, &mut buffer2);
 
-            let tip_temp = resources
+            let tip_temp = c.resources
                 .tip_temperature
                 .lock(|tip_temperature| *tip_temperature);
             let tip_temp_str = tip_temp.numtoa_str(10, &mut buffer3);
 
-            let duty_temp = resources
+            let duty_temp = c.resources
                 .duty
                 .lock(|duty| *duty);
 
-            resources.display.clear();
+            c.resources.display.clear();
 
-            resources
+            c.resources
                 .display
                 .draw(Font12x16::render_str("Chip:").into_iter());
 
-            resources.display.draw(
+            c.resources.display.draw(
                 Font12x16::render_str(chip_temp_str)
-                    .translate(Coord::new(72, 0))
+                    .translate(Point::new(72, 0))
                     .into_iter(),
             );
 
-            resources.display.draw(
+            c.resources.display.draw(
                 Font12x16::render_str("Tip:")
-                    .translate(Coord::new(0, 16))
+                    .translate(Point::new(0, 16))
                     .into_iter(),
             );
 
-            resources.display.draw(
+            c.resources.display.draw(
                 Font12x16::render_str(tip_temp_str)
-                    .translate(Coord::new(72, 16))
+                    .translate(Point::new(72, 16))
                     .into_iter(),
             );
 
-            resources.display.draw(
+            c.resources.display.draw(
                 Font12x16::render_str("Pot:")
-                    .translate(Coord::new(0, 32))
+                    .translate(Point::new(0, 32))
                     .into_iter(),
             );
 
-            resources.display.draw(
+            c.resources.display.draw(
                 Font12x16::render_str(set_temp_str)
-                    .translate(Coord::new(72, 32))
+                    .translate(Point::new(72, 32))
                     .into_iter(),
             );
 
-            resources.display.draw(
-                embedded_graphics::primitives::Rect::new(Coord::new(0, 62), Coord::new(duty_temp as i32/512, 63)).with_stroke(Some(1u8.into())).into_iter(),
-            );
+            // TODO: Port this:
+            // c.resources.display.draw(
+            //     embedded_graphics::primitives::Rectangle::new(Point::new(0, 62), Point::new(duty_temp as i32/512, 63)).stroke(Some(1u8.into())).into_iter(),
+            // );
 
             // Send data to the display
-            match resources.display.flush() {
+            match c.resources.display.flush() {
                 Ok(_) => (),
                 Err(_) => (),
             };
@@ -234,16 +246,16 @@ const APP: () = {
     }
 
     #[task(schedule = [regulator], resources = [pwm, set_temperature, tip_temperature, chip_temperature, duty, adc1], priority = 2)]
-    fn regulator() {
-        resources.pwm.set_duty(0);
+    fn regulator(mut c: regulator::Context) {
+        c.resources.pwm.set_duty(0);
         cortex_m::asm::delay(10000);
 
-        let tip_temperature_vsense = adc1_measure_single_blocking(&mut resources.adc1, 1);
-        *resources.tip_temperature = tip_temperature_vsense as i16;
+        let tip_temperature_vsense = adc1_measure_single_blocking(&mut c.resources.adc1, 1);
+        *c.resources.tip_temperature = tip_temperature_vsense as i16;
 
         //let max_duty = resources.pwm.get_max_duty();
 
-        let error: i32 = (*resources.set_temperature as i32 - tip_temperature_vsense as i32)*50;
+        let error: i32 = (*c.resources.set_temperature as i32 - tip_temperature_vsense as i32)*50;
         let mut duty: u16 = 0;
 
         if error > 30000 {
@@ -254,24 +266,24 @@ const APP: () = {
             duty = 0u16;
         }
 
-        resources.pwm.set_duty(duty);
-        *resources.duty = duty;
+        c.resources.pwm.set_duty(duty);
+        *c.resources.duty = duty;
 
-        schedule.regulator(scheduled + 1_000_000.cycles()).unwrap();
+        c.schedule.regulator(c.scheduled + 1_000_000.cycles()).unwrap();
     }
 
 
     #[task(schedule = [led_blinker], resources = [led, led_on])]
-    fn led_blinker() {
-        if *resources.led_on {
-            resources.led.set_low();
-            *resources.led_on = false; // No idea what is the reality
+    fn led_blinker(c: led_blinker::Context) {
+        if *c.resources.led_on {
+            c.resources.led.set_low();
+            *c.resources.led_on = false; // No idea what is the reality
         } else {
-            resources.led.set_high();
-            *resources.led_on = true;
+            c.resources.led.set_high();
+            *c.resources.led_on = true;
         }
 
-        schedule.led_blinker(scheduled + 10_000_000.cycles()).unwrap();
+        c.schedule.led_blinker(c.scheduled + 10_000_000.cycles()).unwrap();
     }
 
     extern "C" {
